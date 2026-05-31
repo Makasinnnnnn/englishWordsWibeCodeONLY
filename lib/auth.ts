@@ -65,8 +65,9 @@ export async function createSession(userId: string) {
   cookies().set(sessionCookieName, token, {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: false,
     path: "/",
+    maxAge: sessionMaxAgeDays * 24 * 60 * 60,
     expires: expiresAt
   });
 }
