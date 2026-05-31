@@ -9,13 +9,13 @@ import { LogoutButton } from "@/components/LogoutButton";
 import type { AuthUser } from "@/lib/auth";
 
 const titles: Array<[string, string]> = [
-  ["/login", "Log in"],
-  ["/register", "Create account"],
-  ["/words/new", "Р”РѕР±Р°РІР»РµРЅРёРµ СЃР»РѕРІР°"],
-  ["/words", "РЎР»РѕРІР°СЂСЊ"],
-  ["/training", "РўСЂРµРЅРёСЂРѕРІРєР°"],
-  ["/settings", "РќР°СЃС‚СЂРѕР№РєРё"],
-  ["/", "РџР°РЅРµР»СЊ РѕР±СѓС‡РµРЅРёСЏ"]
+  ["/login", "Вход"],
+  ["/register", "Создание аккаунта"],
+  ["/words/new", "Добавление слова"],
+  ["/words", "Словарь"],
+  ["/training", "Тренировка"],
+  ["/settings", "Настройки"],
+  ["/", "Панель обучения"]
 ];
 
 function getTitle(pathname: string) {
@@ -37,12 +37,12 @@ export function Header({ user }: { user: AuthUser | null }) {
           <div className="hidden items-center gap-2 sm:flex">
             <Link href="/words/new">
               <Button variant="secondary" icon={<PlusCircle className="h-4 w-4" />}>
-                Р”РѕР±Р°РІРёС‚СЊ СЃР»РѕРІРѕ
+                Добавить слово
               </Button>
             </Link>
             <Link href="/training">
               <Button variant="primary" icon={<Dumbbell className="h-4 w-4" />}>
-                РќР°С‡Р°С‚СЊ С‚СЂРµРЅРёСЂРѕРІРєСѓ
+                Начать тренировку
               </Button>
             </Link>
             <LogoutButton />
@@ -51,7 +51,7 @@ export function Header({ user }: { user: AuthUser | null }) {
 
         <div className="sm:hidden">
           <Link href={user ? "/words" : "/login"}>
-            <Button variant="ghost" size="icon" aria-label="Open navigation" icon={<Menu className="h-5 w-5" />} />
+            <Button variant="ghost" size="icon" aria-label="Открыть навигацию" icon={<Menu className="h-5 w-5" />} />
           </Link>
         </div>
       </div>

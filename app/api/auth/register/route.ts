@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 
 import { apiError, isPrismaUniqueViolation, validationError } from "@/lib/apiResponse";
-import { authSchema } from "@/lib/authSchemas";
 import { createSession, hashPassword, normalizeAuthEmail } from "@/lib/auth";
+import { authSchema } from "@/lib/authSchemas";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";

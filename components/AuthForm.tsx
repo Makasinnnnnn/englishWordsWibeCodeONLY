@@ -43,7 +43,7 @@ export function AuthForm({ mode }: AuthFormProps) {
   const [submitting, setSubmitting] = useState(false);
   const [generatedCredentials, setGeneratedCredentials] = useState<GeneratedCredentials | null>(null);
   const isRegister = mode === "register";
-  const passwordLengthError = password.length > 0 && password.length < 8 ? `Пароль меньше 8 символов. Нужно ещё ${8 - password.length}.` : undefined;
+  const passwordLengthError = password.length > 0 && password.length < 8 ? `Пароль меньше 8 символов. Нужно еще ${8 - password.length}.` : undefined;
   const passwordHint = useMemo(() => {
     if (passwordLengthError) {
       return undefined;
@@ -192,7 +192,7 @@ export function AuthForm({ mode }: AuthFormProps) {
       </Button>
 
       <p className="text-center text-sm text-slate-400">
-        {isRegister ? "Уже есть аккаунт?" : "Ещё нет аккаунта?"}{" "}
+        {isRegister ? "Уже есть аккаунт?" : "Еще нет аккаунта?"}{" "}
         <Link href={isRegister ? "/login" : "/register"} className="text-sky-200 hover:text-sky-100">
           {isRegister ? "Войти" : "Создать"}
         </Link>
