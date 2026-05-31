@@ -2,7 +2,6 @@
 
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { LogIn, UserPlus } from "lucide-react";
 
 import { Button } from "@/components/Button";
@@ -15,7 +14,6 @@ type AuthFormProps = {
 };
 
 export function AuthForm({ mode }: AuthFormProps) {
-  const router = useRouter();
   const { showToast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -50,8 +48,7 @@ export function AuthForm({ mode }: AuthFormProps) {
       }
 
       showToast(isRegister ? "Account created" : "Logged in", "success");
-      router.push("/");
-      router.refresh();
+      window.location.assign("/");
     } catch (error) {
       showToast(error instanceof Error ? error.message : "Auth failed", "error");
     } finally {
