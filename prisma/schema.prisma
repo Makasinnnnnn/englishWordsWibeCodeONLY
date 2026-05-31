@@ -8,19 +8,24 @@ datasource db {
 }
 
 model Word {
-  id             String    @id @default(cuid())
-  english        String
-  translation    String
-  association    String?
-  imageUrl       String?
-  notes          String?
-  difficulty     String    @default("medium")
-  learningLevel  Int       @default(0)
-  correctCount   Int       @default(0)
-  wrongCount     Int       @default(0)
-  typoCount      Int       @default(0)
-  isLearned      Boolean   @default(false)
-  lastReviewedAt DateTime?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  id                String    @id @default(cuid())
+  english           String
+  englishNormalized String    @unique
+  translation       String
+  association       String?
+  imageUrl          String?
+  notes             String?
+  difficulty        String    @default("medium")
+  learningLevel     Int       @default(0)
+  correctCount      Int       @default(0)
+  wrongCount        Int       @default(0)
+  typoCount         Int       @default(0)
+  reviewCount       Int       @default(0)
+  streak            Int       @default(0)
+  lastResult        String?
+  isLearned         Boolean   @default(false)
+  lastReviewedAt    DateTime?
+  nextReviewAt      DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 }

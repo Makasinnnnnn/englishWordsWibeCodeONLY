@@ -16,12 +16,13 @@ type MultipleChoiceQuizProps = {
   words: WordView[];
   visibility: HintVisibility;
   answerField?: "english" | "translation";
+  fallbackOptions?: string[];
   title?: string;
   onNext?: () => void;
   onReviewed?: (word: WordView) => void;
 };
 
-export function MultipleChoiceQuiz({ word, words, visibility, answerField = "english", title = "Multiple Choice", onNext, onReviewed }: MultipleChoiceQuizProps) {
+export function MultipleChoiceQuiz({ word, words, visibility, answerField = "english", fallbackOptions, title = "Тест", onNext, onReviewed }: MultipleChoiceQuizProps) {
   const [selected, setSelected] = useState<string | null>(null);
   const [status, setStatus] = useState<"correct" | "wrong" | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
@@ -29,8 +30,8 @@ export function MultipleChoiceQuiz({ word, words, visibility, answerField = "eng
 
   const correctAnswer = answerField === "english" ? word.english : word.translation;
   const options = useMemo(
-    () => buildMultipleChoiceOptions(correctAnswer, words.map((item) => (answerField === "english" ? item.english : item.translation))),
-    [answerField, correctAnswer, words]
+    () => buildMultipleChoiceOptions(correctAnswer, words.map((item) => (answerField === "english" ? item.english : item.translation)), fallbackOptions),
+    [answerField, correctAnswer, fallbackOptions, words]
   );
 
   useEffect(() => {
@@ -66,18 +67,6 @@ export function MultipleChoiceQuiz({ word, words, visibility, answerField = "eng
 
     try {
       const updatedWord = await saveReview(word.id, nextStatus);
-      onReviewed?.(updatedWord);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function quickReview(result: "correct" | "wrong") {
-    setBusy(true);
-    setStatus(result);
-    setShowAnswer(true);
-    try {
-      const updatedWord = await saveReview(word.id, result);
       onReviewed?.(updatedWord);
     } finally {
       setBusy(false);
@@ -138,13 +127,7 @@ export function MultipleChoiceQuiz({ word, words, visibility, answerField = "eng
         ) : null}
 
         <div className="mt-5 flex flex-wrap gap-2">
-          <Button type="button" variant="success" onClick={() => void quickReview("correct")} disabled={busy || Boolean(status)}>
-            Я вспомнил
-          </Button>
-          <Button type="button" variant="danger" onClick={() => void quickReview("wrong")} disabled={busy || Boolean(status)}>
-            Не вспомнил
-          </Button>
-          <Button type="button" variant="primary" onClick={onNext}>
+          <Button type="button" variant="primary" onClick={onNext} disabled={!status}>
             Следующее слово
           </Button>
         </div>

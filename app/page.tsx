@@ -18,6 +18,11 @@ export default async function DashboardPage() {
     })
   );
   const allWords = serializeWords(await prisma.word.findMany());
+  const now = Date.now();
+  const dueWords = allWords
+    .filter((word) => !word.isLearned && (!word.nextReviewAt || new Date(word.nextReviewAt).getTime() <= now))
+    .sort((a, b) => a.learningLevel - b.learningLevel || b.wrongCount - a.wrongCount)
+    .slice(0, 4);
 
   return (
     <div className="space-y-6">
@@ -27,7 +32,7 @@ export default async function DashboardPage() {
             <p className="text-xs uppercase tracking-[0.18em] text-sky-200/80">Word Memory Trainer</p>
             <h2 className="mt-3 max-w-3xl text-3xl font-semibold text-white md:text-5xl">Личный тренажер английских слов с ассоциациями и лестницей подсказок</h2>
             <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-400">
-              Добавляйте слова, перевод, личные ассоциации и изображения, а затем тренируйтесь в режимах Multiple Choice, Manual Input и Hint Ladder.
+              Добавляйте слова, перевод, личные ассоциации и изображения, а затем тренируйтесь в режимах теста, ручного ввода и главной лестницы подсказок.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link href="/words/new">
@@ -44,13 +49,63 @@ export default async function DashboardPage() {
           </div>
           <div className="rounded-lg border border-white/10 bg-graphite-900 p-5">
             <p className="text-sm font-medium text-slate-200">Сегодняшний фокус</p>
-            <p className="mt-3 text-4xl font-semibold text-white">Hint Ladder</p>
+            <p className="mt-3 text-4xl font-semibold text-white">Главный режим</p>
             <p className="mt-3 text-sm leading-6 text-slate-500">Подсказки исчезают по этапам, а финальная проверка закрепляет слово через ручной ввод.</p>
           </div>
         </div>
       </section>
 
       <StatsCards words={allWords} />
+
+      <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="panel p-5">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Сегодня повторить</p>
+              <h2 className="mt-1 text-xl font-semibold text-white">{dueWords.length > 0 ? `${dueWords.length} слова ждут тренировки` : "Очередь чистая"}</h2>
+            </div>
+            <Link href="/training">
+              <Button variant="primary" icon={<Dumbbell className="h-4 w-4" />}>
+                Тренироваться
+              </Button>
+            </Link>
+          </div>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {dueWords.length > 0 ? (
+              dueWords.map((word) => (
+                <Link key={word.id} href={`/training/${word.id}`} className="rounded-lg border border-white/10 bg-white/[0.035] p-4 transition hover:border-sky-300/40 hover:bg-white/[0.06]">
+                  <p className="text-lg font-semibold text-white">{word.english}</p>
+                  <p className="mt-1 text-sm text-slate-400">{word.translation}</p>
+                  <p className="mt-3 text-xs text-slate-500">Уровень {word.learningLevel} · ошибок {word.wrongCount}</p>
+                </Link>
+              ))
+            ) : (
+              <p className="rounded-lg border border-white/10 bg-white/[0.035] p-4 text-sm text-slate-400 sm:col-span-2">Добавьте новые слова или повторите выученные в свободном режиме.</p>
+            )}
+          </div>
+        </div>
+
+        <div className="panel p-5">
+          <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Быстрые действия</p>
+          <div className="mt-4 grid gap-3">
+            <Link href="/words/new">
+              <Button variant="secondary" className="w-full justify-start" icon={<PlusCircle className="h-4 w-4" />}>
+                Добавить слово
+              </Button>
+            </Link>
+            <Link href="/words">
+              <Button variant="secondary" className="w-full justify-start">
+                Открыть словарь
+              </Button>
+            </Link>
+            <Link href="/settings">
+              <Button variant="secondary" className="w-full justify-start">
+                Настроить подсказки
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
 
       {words.length > 0 ? (
         <section className="space-y-4">

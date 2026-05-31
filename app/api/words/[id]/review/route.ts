@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 
+import { apiError, validationError } from "@/lib/apiResponse";
 import { prisma } from "@/lib/prisma";
 import { reviewSchema } from "@/lib/schemas";
+import { getReviewUpdateState } from "@/lib/wordLogic";
 import { serializeWord } from "@/lib/wordSerializer";
 
 export const dynamic = "force-dynamic";
@@ -21,15 +23,11 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     });
 
     if (!existingWord) {
-      return NextResponse.json({ error: "Word not found" }, { status: 404 });
+      return apiError("Word not found", { status: 404, code: "WORD_NOT_FOUND" });
     }
 
-    const nextLevel =
-      result === "correct"
-        ? Math.min(5, existingWord.learningLevel + 1)
-        : result === "wrong"
-          ? Math.max(0, existingWord.learningLevel - 1)
-          : existingWord.learningLevel;
+    const nextState = getReviewUpdateState(existingWord, result);
+    const reviewedAt = new Date();
 
     const word = await prisma.word.update({
       where: { id: params.id },
@@ -37,18 +35,22 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
         correctCount: result === "correct" ? { increment: 1 } : undefined,
         typoCount: result === "typo" ? { increment: 1 } : undefined,
         wrongCount: result === "wrong" ? { increment: 1 } : undefined,
-        learningLevel: nextLevel,
-        isLearned: result === "wrong" ? false : nextLevel >= 5,
-        lastReviewedAt: new Date()
+        reviewCount: { increment: 1 },
+        learningLevel: nextState.learningLevel,
+        streak: nextState.streak,
+        isLearned: nextState.isLearned,
+        lastResult: result,
+        lastReviewedAt: reviewedAt,
+        nextReviewAt: nextState.nextReviewAt
       }
     });
 
     return NextResponse.json({ word: serializeWord(word) });
   } catch (error) {
     if (error instanceof ZodError) {
-      return NextResponse.json({ error: "Invalid review result", issues: error.flatten() }, { status: 400 });
+      return validationError(error);
     }
 
-    return NextResponse.json({ error: "Failed to save review" }, { status: 500 });
+    return apiError("Failed to save review");
   }
 }

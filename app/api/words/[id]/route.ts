@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 
+import { apiError, isPrismaNotFound, isPrismaUniqueViolation, validationError } from "@/lib/apiResponse";
 import { prisma } from "@/lib/prisma";
 import { wordUpdateSchema } from "@/lib/schemas";
+import { normalizeEnglishWord } from "@/lib/wordLogic";
 import { serializeWord } from "@/lib/wordSerializer";
 
 export const dynamic = "force-dynamic";
@@ -14,32 +16,52 @@ type RouteContext = {
 };
 
 export async function GET(_request: NextRequest, { params }: RouteContext) {
-  const word = await prisma.word.findUnique({
-    where: { id: params.id }
-  });
+  try {
+    const word = await prisma.word.findUnique({
+      where: { id: params.id }
+    });
 
-  if (!word) {
-    return NextResponse.json({ error: "Word not found" }, { status: 404 });
+    if (!word) {
+      return apiError("Word not found", { status: 404, code: "WORD_NOT_FOUND" });
+    }
+
+    return NextResponse.json({ word: serializeWord(word) });
+  } catch {
+    return apiError("Failed to load word");
   }
-
-  return NextResponse.json({ word: serializeWord(word) });
 }
 
 export async function PUT(request: NextRequest, { params }: RouteContext) {
   try {
     const payload = wordUpdateSchema.parse(await request.json());
+    const { nextReviewAt, ...restPayload } = payload;
     const word = await prisma.word.update({
       where: { id: params.id },
-      data: payload
+      data: {
+        ...restPayload,
+        englishNormalized: payload.english ? normalizeEnglishWord(payload.english) : undefined,
+        nextReviewAt: nextReviewAt === undefined ? undefined : nextReviewAt ? new Date(nextReviewAt) : null
+      }
     });
 
     return NextResponse.json({ word: serializeWord(word) });
   } catch (error) {
     if (error instanceof ZodError) {
-      return NextResponse.json({ error: "Invalid word data", issues: error.flatten() }, { status: 400 });
+      return validationError(error);
     }
 
-    return NextResponse.json({ error: "Failed to update word" }, { status: 500 });
+    if (isPrismaNotFound(error)) {
+      return apiError("Word not found", { status: 404, code: "WORD_NOT_FOUND" });
+    }
+
+    if (isPrismaUniqueViolation(error)) {
+      return apiError("This word already exists in your dictionary", {
+        status: 409,
+        code: "WORD_ALREADY_EXISTS"
+      });
+    }
+
+    return apiError("Failed to update word");
   }
 }
 
@@ -50,7 +72,11 @@ export async function DELETE(_request: NextRequest, { params }: RouteContext) {
     });
 
     return NextResponse.json({ ok: true });
-  } catch {
-    return NextResponse.json({ error: "Failed to delete word" }, { status: 500 });
+  } catch (error) {
+    if (isPrismaNotFound(error)) {
+      return apiError("Word not found", { status: 404, code: "WORD_NOT_FOUND" });
+    }
+
+    return apiError("Failed to delete word");
   }
 }

@@ -1,17 +1,21 @@
 import type { Word } from "@prisma/client";
 
-export type WordView = Omit<Word, "createdAt" | "updatedAt" | "lastReviewedAt"> & {
+export type WordView = Omit<Word, "englishNormalized" | "createdAt" | "updatedAt" | "lastReviewedAt" | "nextReviewAt"> & {
   createdAt: string;
   updatedAt: string;
   lastReviewedAt: string | null;
+  nextReviewAt: string | null;
 };
 
 export function serializeWord(word: Word): WordView {
+  const { englishNormalized: _englishNormalized, ...publicWord } = word;
+
   return {
-    ...word,
+    ...publicWord,
     createdAt: word.createdAt.toISOString(),
     updatedAt: word.updatedAt.toISOString(),
-    lastReviewedAt: word.lastReviewedAt ? word.lastReviewedAt.toISOString() : null
+    lastReviewedAt: word.lastReviewedAt ? word.lastReviewedAt.toISOString() : null,
+    nextReviewAt: word.nextReviewAt ? word.nextReviewAt.toISOString() : null
   };
 }
 

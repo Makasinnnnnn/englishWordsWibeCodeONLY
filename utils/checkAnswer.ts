@@ -66,7 +66,7 @@ export function checkAnswer(userAnswer: string, correctAnswer: string): CheckAns
     return {
       status: "typo",
       distance,
-      message: `Почти правильно, возможно ошибка в написании. Правильный вариант: ${correctAnswer}`
+      message: "Почти правильно, проверь написание."
     };
   }
 

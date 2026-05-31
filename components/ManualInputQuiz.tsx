@@ -34,7 +34,7 @@ const resultIcons = {
   wrong: XCircle
 };
 
-export function ManualInputQuiz({ word, visibility, correctAnswer = word.english, title = "Manual Input", question = "Введите английское слово", onNext, onReviewed }: ManualInputQuizProps) {
+export function ManualInputQuiz({ word, visibility, correctAnswer = word.english, title = "Ручной ввод", question = "Введите английское слово", onNext, onReviewed }: ManualInputQuizProps) {
   const [answer, setAnswer] = useState("");
   const [result, setResult] = useState<CheckAnswerResult | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
@@ -59,20 +59,20 @@ export function ManualInputQuiz({ word, visibility, correctAnswer = word.english
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (busy || result?.status === "correct") {
+      return;
+    }
+
     const nextResult = checkAnswer(answer, correctAnswer);
     setResult(nextResult);
     setShowAnswer(nextResult.status !== "correct");
     await review(nextResult.status);
   }
 
-  async function quickReview(status: "correct" | "wrong") {
-    const nextResult =
-      status === "correct"
-        ? { status, distance: 0, message: "Правильно!" }
-        : { status, distance: correctAnswer.length, message: `Неправильно. Правильный ответ: ${correctAnswer}` };
-    setResult(nextResult);
-    setShowAnswer(true);
-    await review(status);
+  function tryAgain() {
+    setAnswer("");
+    setResult(null);
+    setShowAnswer(false);
   }
 
   const ResultIcon = result ? resultIcons[result.status] : null;
@@ -94,7 +94,13 @@ export function ManualInputQuiz({ word, visibility, correctAnswer = word.english
 
         <form className="flex flex-col gap-3 sm:flex-row" onSubmit={handleSubmit}>
           <div className="flex-1">
-            <Input value={answer} onChange={(event) => setAnswer(event.target.value)} placeholder="Введите ответ и нажмите Enter" autoComplete="off" />
+            <Input
+              value={answer}
+              onChange={(event) => setAnswer(event.target.value)}
+              placeholder="Введите ответ и нажмите Enter"
+              autoComplete="off"
+              disabled={result?.status === "correct"}
+            />
           </div>
           <Button type="submit" variant="primary" icon={<Keyboard className="h-4 w-4" />} disabled={busy || !answer.trim()}>
             Проверить
@@ -114,13 +120,12 @@ export function ManualInputQuiz({ word, visibility, correctAnswer = word.english
         ) : null}
 
         <div className="mt-5 flex flex-wrap gap-2">
-          <Button type="button" variant="success" onClick={() => void quickReview("correct")} disabled={busy}>
-            Я вспомнил
-          </Button>
-          <Button type="button" variant="danger" onClick={() => void quickReview("wrong")} disabled={busy}>
-            Не вспомнил
-          </Button>
-          <Button type="button" variant="primary" onClick={onNext}>
+          {result && result.status !== "correct" ? (
+            <Button type="button" variant="secondary" onClick={tryAgain}>
+              Попробовать ещё раз
+            </Button>
+          ) : null}
+          <Button type="button" variant="primary" onClick={onNext} disabled={!result || result.status === "typo"}>
             Следующее слово
           </Button>
         </div>

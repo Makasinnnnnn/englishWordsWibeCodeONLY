@@ -1,8 +1,10 @@
 # Word Memory Trainer
 
-Современное веб-приложение для изучения английских слов через личный словарь, переводы, ассоциации, изображения и постепенное исчезновение подсказок.
+Word Memory Trainer is a local web app for learning English words through a personal dictionary, translations, associations, images, progressive hints, multiple choice, and manual answer checks.
 
-## Стек
+The project is designed as a stable MVP that works without paid APIs. Translation and image suggestions are mock-based and can be replaced later with real providers.
+
+## Stack
 
 - Next.js App Router
 - TypeScript
@@ -10,25 +12,103 @@
 - Prisma
 - SQLite
 - Zod
+- Vitest
 - Controlled React components
 
-## Запуск
+## Features
+
+- Personal dictionary with English word, translation, association, image, notes, difficulty, and progress.
+- Dashboard with stats, quick actions, due words, and recent words.
+- Word add/edit/delete/detail flows.
+- Duplicate protection through `englishNormalized`.
+- Mock translation suggestions.
+- Mock image suggestions and manual image URL input.
+- Training sidebar with hint visibility settings.
+- Training modes:
+  - Hint Ladder
+  - Multiple Choice
+  - Manual Input
+  - Reverse Translation
+  - Image Association
+  - Progressive Hints
+- Levenshtein typo detection.
+- Review progress with level, streak, review count, last result, and next review date.
+- Dictionary search, filters, and sorting.
+- Local training settings saved in `localStorage`.
+
+## Screenshots
+
+Add screenshots here after running the app:
+
+```text
+docs/screenshots/dashboard.png
+docs/screenshots/training.png
+docs/screenshots/dictionary.png
+```
+
+## Setup
 
 ```bash
 npm install
+cp .env.example .env
 npx prisma generate
 npx prisma migrate dev --name init
 npm run seed
 npm run dev
 ```
 
-Приложение использует SQLite и локальный `.env`:
+On Windows PowerShell, if `cp` is not available:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Default `.env`:
 
 ```env
 DATABASE_URL="file:./dev.db"
 ```
 
-## Структура проекта
+The app runs at:
+
+```text
+http://localhost:3000
+```
+
+If port 3000 is busy, Next.js will use the next free port.
+
+## Quality Commands
+
+```bash
+npm run typecheck
+npm run lint
+npm run test
+npm run build
+```
+
+## Prisma
+
+Schema:
+
+```text
+prisma/schema.prisma
+```
+
+Seed:
+
+```bash
+npm run seed
+```
+
+Demo words:
+
+- apple
+- book
+- river
+- cloud
+- fire
+
+## Project Structure
 
 ```text
 app/
@@ -45,93 +125,72 @@ app/
   words/new/page.tsx
   words/[id]/page.tsx
   words/[id]/edit/page.tsx
-  layout.tsx
-  page.tsx
 components/
-  Button.tsx
-  EmptyState.tsx
-  Header.tsx
-  HiddenHintBlock.tsx
   HintLadderTraining.tsx
-  HintStepProgress.tsx
-  HintVisibilityControls.tsx
-  ImagePicker.tsx
-  Input.tsx
-  Layout.tsx
   ManualInputQuiz.tsx
   MultipleChoiceQuiz.tsx
-  ProgressBar.tsx
-  Select.tsx
-  SettingsClient.tsx
-  Sidebar.tsx
-  StatsCards.tsx
-  Textarea.tsx
-  Toast.tsx
-  TrainingCard.tsx
-  TrainingSidebar.tsx
   TrainingWorkspace.tsx
-  WordCard.tsx
   WordForm.tsx
+  WordCard.tsx
+  WordListClient.tsx
 lib/
+  apiResponse.ts
   mockSuggestions.ts
   prisma.ts
   schemas.ts
   trainingSettings.ts
+  wordLogic.ts
   wordSerializer.ts
-prisma/
-  schema.prisma
-  seed.ts
 utils/
   checkAnswer.ts
-  cn.ts
   hintLadder.ts
   reviewClient.ts
   trainingQueue.ts
 ```
 
-## Основная логика
+## Training Logic
 
-- Пользователь добавляет английское слово, перевод, ассоциацию, картинку, заметки и сложность.
-- Перевод предлагается mock-функцией `suggestTranslation`.
-- Картинки предлагаются mock-функцией `suggestImages`; можно вставить свой URL.
-- Словарь поддерживает просмотр, редактирование, удаление, тренировку конкретного слова и отметку "выучено".
-- Тренировка выбирает слова сначала по меньшему `learningLevel`, затем по большему числу ошибок, затем по давности повторения.
-- Ответы сохраняются через `/api/words/[id]/review`.
-- `correct` повышает уровень, `typo` считает опечатку без повышения уровня, `wrong` снижает уровень.
-- Уровень 5 автоматически помечает слово как выученное.
+Words are prioritized by:
 
-## Режимы тренировки
+1. Not learned first.
+2. Due now or missing `nextReviewAt`.
+3. Lower `learningLevel`.
+4. Higher `wrongCount`.
+5. Older `lastReviewedAt`.
 
-- Hint Ladder / Лестница подсказок
-- Multiple Choice
-- Manual Input
-- Reverse Translation
-- Image Association
-- Progressive Hints
+Shuffle, when enabled, only breaks ties inside the priority queue instead of destroying the learning priority.
 
-## Проверка ответа
+Review results:
 
-Файл `utils/checkAnswer.ts` содержит:
+- `correct`: increments correct count, review count, streak, level, and schedules a later review.
+- `typo`: increments typo count and review count, keeps level and streak.
+- `wrong`: increments wrong count and review count, resets streak, lowers level, and schedules a sooner review.
 
-- `normalizeAnswer(text)`
-- `levenshteinDistance(a, b)`
-- `checkAnswer(userAnswer, correctAnswer)`
+Level intervals:
 
-`checkAnswer` возвращает:
+- 0: today
+- 1: tomorrow
+- 2: in 2 days
+- 3: in 4 days
+- 4: in 7 days
+- 5: in 14 days
 
-```ts
-{
-  status: "correct" | "typo" | "wrong",
-  distance: number,
-  message: string
-}
-```
+## What Works Now
 
-## Будущие улучшения
+- App starts locally.
+- Prisma migrations and seed work.
+- TypeScript, ESLint, tests, and production build pass.
+- CRUD dictionary works.
+- Duplicate words are rejected.
+- Training updates progress through API.
+- Hint Ladder requires manual input on the final stage.
+- Multiple Choice and Manual Input no longer allow easy progress through self-rating buttons.
 
-- Подключить реальный переводчик через API.
-- Подключить полноценный image search API.
-- Добавить авторизацию и несколько словарей.
-- Добавить интервальное повторение по расписанию.
-- Добавить импорт/экспорт CSV.
-- Добавить синхронизацию настроек между устройствами.
+## Future Improvements
+
+- Real translation API integration.
+- Real image search API integration.
+- User accounts and multiple dictionaries.
+- CSV import/export.
+- Scheduled review calendar.
+- More tests for API routes and React components.

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { ArrowLeft, CheckCircle2, Eye, Flag, Keyboard, TriangleAlert, XCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Eye, Flag, Keyboard, RotateCcw, TriangleAlert, XCircle } from "lucide-react";
 
 import { Button } from "@/components/Button";
 import { HintStepProgress } from "@/components/HintStepProgress";
@@ -41,13 +41,14 @@ export function HintLadderTraining({ word, settings, title = "Лестница �
   const [result, setResult] = useState<CheckAnswerResult | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
   const [completed, setCompleted] = useState(false);
+  const [completedWord, setCompletedWord] = useState<WordView | null>(null);
   const [busy, setBusy] = useState(false);
 
   const totalSteps = settings.ladder.totalSteps;
   const visibility = useMemo(() => {
     const base = getHintVisibility(currentStep, totalSteps);
 
-    if (currentStep === totalSteps) {
+    if (base.requireManualInput) {
       return {
         ...base,
         showFirstLetter: settings.ladder.finalFirstLetter,
@@ -64,6 +65,7 @@ export function HintLadderTraining({ word, settings, title = "Лестница �
     setResult(null);
     setShowAnswer(false);
     setCompleted(false);
+    setCompletedWord(null);
     setBusy(false);
   }, [word.id, totalSteps]);
 
@@ -83,11 +85,19 @@ export function HintLadderTraining({ word, settings, title = "Лестница �
     setCurrentStep((step) => Math.max(1, step - 1));
   }
 
+  function restart() {
+    resetFeedback();
+    setCompleted(false);
+    setCompletedWord(null);
+    setCurrentStep(1);
+  }
+
   async function review(status: AnswerStatus) {
     setBusy(true);
     try {
       const updatedWord = await saveReview(word.id, status);
       onReviewed?.(updatedWord);
+      return updatedWord;
     } finally {
       setBusy(false);
     }
@@ -102,7 +112,8 @@ export function HintLadderTraining({ word, settings, title = "Лестница �
       setShowAnswer(false);
 
       if (currentStep === totalSteps) {
-        await review("correct");
+        const updatedWord = await review("correct");
+        setCompletedWord(updatedWord);
         setCompleted(true);
         return;
       }
@@ -119,33 +130,9 @@ export function HintLadderTraining({ word, settings, title = "Лестница �
 
     setShowAnswer(true);
     await review("wrong");
-  }
-
-  async function markRemembered() {
-    const nextResult: CheckAnswerResult = {
-      status: "correct",
-      distance: 0,
-      message: "Правильно!"
-    };
-    setResult(nextResult);
-    await review("correct");
-
-    if (currentStep === totalSteps) {
-      setCompleted(true);
-    } else {
-      goNextStep();
+    if (settings.ladder.stepBackOnWrong) {
+      setCurrentStep((step) => Math.max(1, step - 1));
     }
-  }
-
-  async function markForgotten() {
-    const nextResult: CheckAnswerResult = {
-      status: "wrong",
-      distance: word.english.length,
-      message: `Неправильно. Правильный ответ: ${word.english}`
-    };
-    setResult(nextResult);
-    setShowAnswer(true);
-    await review("wrong");
   }
 
   const ResultIcon = result ? resultIcons[result.status] : null;
@@ -177,7 +164,17 @@ export function HintLadderTraining({ word, settings, title = "Лестница �
               <CheckCircle2 className="h-5 w-5" />
               Лестница пройдена
             </div>
-            <p className="mt-2 text-sm leading-6 text-emerald-100/80">Слово засчитано как успешное повторение. Если оно дойдет до уровня 5, приложение отметит его как выученное.</p>
+            <p className="mt-2 text-sm leading-6 text-emerald-100/80">
+              Слово засчитано как успешное повторение. Новый уровень: {completedWord?.learningLevel ?? word.learningLevel}/5.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Button type="button" variant="primary" onClick={onNext}>
+                Следующее слово
+              </Button>
+              <Button type="button" variant="secondary" onClick={restart} icon={<RotateCcw className="h-4 w-4" />}>
+                Повторить это слово
+              </Button>
+            </div>
           </div>
         ) : visibility.requireManualInput ? (
           <form className="space-y-4" onSubmit={handleManualSubmit}>
@@ -187,7 +184,7 @@ export function HintLadderTraining({ word, settings, title = "Лестница �
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">
               <div className="flex-1">
-                <Input value={userAnswer} onChange={(event) => setUserAnswer(event.target.value)} placeholder="Введите слово и нажмите Enter" autoComplete="off" />
+                <Input value={userAnswer} onChange={(event) => setUserAnswer(event.target.value)} placeholder="Введите слово и нажмите Enter" autoComplete="off" disabled={busy} />
               </div>
               <Button type="submit" variant="primary" icon={<Keyboard className="h-4 w-4" />} disabled={busy || !userAnswer.trim()}>
                 Проверить
@@ -201,7 +198,7 @@ export function HintLadderTraining({ word, settings, title = "Лестница �
               <h3 className="mt-1 text-xl font-semibold text-white">Свяжите слово, перевод, образ и ассоциацию</h3>
             </div>
             <Button type="button" variant="primary" onClick={goNextStep}>
-              Я запомнил / Далее
+              Далее
             </Button>
           </div>
         )}
@@ -225,11 +222,8 @@ export function HintLadderTraining({ word, settings, title = "Лестница �
           <Button type="button" variant="secondary" icon={<ArrowLeft className="h-4 w-4" />} onClick={goPreviousStep} disabled={currentStep === 1}>
             Вернуться на шаг назад
           </Button>
-          <Button type="button" variant="success" onClick={() => void markRemembered()} disabled={busy || completed}>
-            Я вспомнил
-          </Button>
-          <Button type="button" variant="danger" onClick={() => void markForgotten()} disabled={busy || completed}>
-            Не вспомнил
+          <Button type="button" variant="secondary" icon={<RotateCcw className="h-4 w-4" />} onClick={restart}>
+            Начать заново
           </Button>
           <Button type="button" variant="warning" icon={<Flag className="h-4 w-4" />} onClick={onNext}>
             Завершить тренировку

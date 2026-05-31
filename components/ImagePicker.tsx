@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { ImageIcon, RefreshCw } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ImageIcon, RefreshCw, Trash2, Upload } from "lucide-react";
 
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
@@ -24,9 +24,12 @@ function ImageFallback({ label = "Preview" }: { label?: string }) {
 }
 
 export function ImagePicker({ value, onChange, word, association }: ImagePickerProps) {
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const [previewBroken, setPreviewBroken] = useState(false);
+  const isUploadedImage = value.startsWith("data:image/");
 
   const loadSuggestions = useCallback(async () => {
     if (!word.trim() && !association.trim()) {
@@ -35,11 +38,17 @@ export function ImagePicker({ value, onChange, word, association }: ImagePickerP
     }
 
     setLoading(true);
+    setError("");
     try {
       const params = new URLSearchParams({ word, association });
       const response = await fetch(`/api/suggest/images?${params.toString()}`);
+      if (!response.ok) {
+        throw new Error("Failed to load images");
+      }
       const data = (await response.json()) as { images: string[] };
       setSuggestions(data.images ?? []);
+    } catch {
+      setError("Не удалось загрузить предложения картинок");
     } finally {
       setLoading(false);
     }
@@ -57,16 +66,57 @@ export function ImagePicker({ value, onChange, word, association }: ImagePickerP
     setPreviewBroken(false);
   }, [value]);
 
+  function handleFileChange(file: File | undefined) {
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      setError("Выберите файл изображения");
+      return;
+    }
+
+    if (file.size > 1_500_000) {
+      setError("Картинка слишком большая. Выберите файл до 1.5 MB");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        setError("");
+        onChange(reader.result);
+      }
+    };
+    reader.onerror = () => setError("Не удалось прочитать файл");
+    reader.readAsDataURL(file);
+  }
+
   return (
     <div className="space-y-4">
-      <div className="flex items-end gap-3">
+      <div className="flex flex-col gap-3 md:flex-row md:items-end">
         <div className="flex-1">
-          <Input label="Association image" value={value} onChange={(event) => onChange(event.target.value)} placeholder="https://..." />
+          <Input
+            label="Association image"
+            value={isUploadedImage ? "Загружена пользовательская картинка" : value}
+            onChange={(event) => onChange(event.target.value)}
+            placeholder="Вставьте ссылку https://..."
+            disabled={isUploadedImage}
+          />
         </div>
-        <Button type="button" variant="secondary" icon={<RefreshCw className="h-4 w-4" />} onClick={() => void loadSuggestions()} disabled={loading}>
-          Обновить
+        <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(event) => handleFileChange(event.target.files?.[0])} />
+        <Button type="button" variant="secondary" icon={<Upload className="h-4 w-4" />} onClick={() => fileInputRef.current?.click()}>
+          Загрузить свою
         </Button>
+        <Button type="button" variant="secondary" icon={<RefreshCw className="h-4 w-4" />} onClick={() => void loadSuggestions()} disabled={loading}>
+          {loading ? "Загрузка..." : "Обновить"}
+        </Button>
+        {value ? (
+          <Button type="button" variant="ghost" size="icon" icon={<Trash2 className="h-4 w-4" />} aria-label="Очистить картинку" onClick={() => onChange("")} />
+        ) : null}
       </div>
+      <p className="text-xs text-slate-500">Можно выбрать картинку из предложений, вставить URL или загрузить свою картинку с компьютера.</p>
+      {error ? <p className="text-xs text-amber-300">{error}</p> : null}
 
       {value && !previewBroken ? (
         <div className="overflow-hidden rounded-lg border border-white/10 bg-white/[0.035]">
@@ -78,6 +128,9 @@ export function ImagePicker({ value, onChange, word, association }: ImagePickerP
       )}
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {loading
+          ? Array.from({ length: 4 }, (_, index) => <div key={index} className="aspect-[16/10] animate-pulse rounded-lg border border-white/10 bg-white/[0.05]" />)
+          : null}
         {suggestions.map((image) => {
           const isSelected = value === image;
 

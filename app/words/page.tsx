@@ -1,5 +1,5 @@
 import { EmptyState } from "@/components/EmptyState";
-import { WordCard } from "@/components/WordCard";
+import { WordListClient } from "@/components/WordListClient";
 import { prisma } from "@/lib/prisma";
 import { serializeWords } from "@/lib/wordSerializer";
 
@@ -25,11 +25,7 @@ export default async function WordsPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-2">
-        {words.map((word) => (
-          <WordCard key={word.id} word={word} />
-        ))}
-      </div>
+      <WordListClient words={words} />
     </div>
   );
 }

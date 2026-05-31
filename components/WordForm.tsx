@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { Save } from "lucide-react";
+import { Dumbbell, RefreshCw, Save } from "lucide-react";
 
 import { Button } from "@/components/Button";
 import { ImagePicker } from "@/components/ImagePicker";
@@ -52,11 +52,48 @@ export function WordForm({ initialWord }: WordFormProps) {
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [translationLoading, setTranslationLoading] = useState(false);
+  const [translationMessage, setTranslationMessage] = useState("");
   const [translationTouched, setTranslationTouched] = useState(Boolean(initialWord?.translation));
+  const [submitIntent, setSubmitIntent] = useState<"card" | "training">("card");
 
   const isEditMode = Boolean(initialWord);
 
   const canSuggestTranslation = useMemo(() => form.english.trim().length > 1 && !translationTouched && !isEditMode, [form.english, isEditMode, translationTouched]);
+
+  const requestTranslation = useCallback(async (force = false, signal?: AbortSignal) => {
+    if (!form.english.trim()) {
+      setTranslationMessage("Введите английское слово");
+      return;
+    }
+
+    setTranslationLoading(true);
+    setTranslationMessage("");
+    try {
+      const params = new URLSearchParams({ word: form.english });
+      const response = await fetch(`/api/suggest/translation?${params.toString()}`, { signal });
+      const data = (await response.json()) as { translation: string; message: string };
+
+      if (data.translation) {
+        if (force || !translationTouched) {
+          setForm((current) => ({ ...current, translation: data.translation }));
+        }
+        setTranslationMessage("Предложен mock-перевод");
+      } else {
+        setTranslationMessage(data.message || "Введите перевод вручную");
+      }
+
+      if (force) {
+        setTranslationTouched(true);
+      }
+    } catch (error) {
+      if ((error as Error).name !== "AbortError") {
+        setTranslationMessage("Не удалось предложить перевод");
+      }
+    } finally {
+      setTranslationLoading(false);
+    }
+  }, [form.english, translationTouched]);
 
   useEffect(() => {
     if (!canSuggestTranslation) {
@@ -65,20 +102,14 @@ export function WordForm({ initialWord }: WordFormProps) {
 
     const controller = new AbortController();
     const timeout = window.setTimeout(async () => {
-      const params = new URLSearchParams({ word: form.english });
-      const response = await fetch(`/api/suggest/translation?${params.toString()}`, { signal: controller.signal });
-      const data = (await response.json()) as { translation: string; message: string };
-
-      if (data.translation) {
-        setForm((current) => ({ ...current, translation: data.translation }));
-      }
+      await requestTranslation(false, controller.signal);
     }, 450);
 
     return () => {
       window.clearTimeout(timeout);
       controller.abort();
     };
-  }, [canSuggestTranslation, form.english]);
+  }, [canSuggestTranslation, requestTranslation]);
 
   function updateField<K extends keyof WordFormState>(field: K, value: WordFormState[K]) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -105,16 +136,21 @@ export function WordForm({ initialWord }: WordFormProps) {
         body: JSON.stringify(parsed.data)
       });
 
-      if (!response.ok) {
-        throw new Error("Request failed");
+      const data = (await response.json()) as { word?: WordView; error?: string; code?: string };
+
+      if (!response.ok || !data.word) {
+        if (data.code === "WORD_ALREADY_EXISTS") {
+          setErrors({ english: "Такое слово уже есть в словаре" });
+        }
+
+        throw new Error(data.error || "Request failed");
       }
 
-      const data = (await response.json()) as { word: WordView };
       showToast(isEditMode ? "Слово обновлено" : "Слово добавлено", "success");
-      router.push(`/words/${data.word.id}`);
+      router.push(submitIntent === "training" ? `/training/${data.word.id}` : `/words/${data.word.id}`);
       router.refresh();
-    } catch {
-      showToast("Не удалось сохранить слово", "error");
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Не удалось сохранить слово", "error");
     } finally {
       setSubmitting(false);
     }
@@ -129,26 +165,37 @@ export function WordForm({ initialWord }: WordFormProps) {
           value={form.english}
           onChange={(event) => {
             updateField("english", event.target.value);
-            if (!isEditMode) {
-              setTranslationTouched(false);
-            }
+            setTranslationMessage("");
           }}
           placeholder="bizarre"
           error={errors.english}
           required
         />
-        <Input
-          label="Translation"
-          name="translation"
-          value={form.translation}
-          onChange={(event) => {
-            updateField("translation", event.target.value);
-            setTranslationTouched(true);
-          }}
-          placeholder="Введите перевод вручную"
-          error={errors.translation}
-          required
-        />
+        <div className="space-y-2">
+          <Input
+            label="Translation"
+            name="translation"
+            value={form.translation}
+            onChange={(event) => {
+              updateField("translation", event.target.value);
+              setTranslationTouched(true);
+            }}
+            placeholder="Введите перевод вручную"
+            hint={translationLoading ? "Ищу mock-перевод..." : translationMessage || undefined}
+            error={errors.translation}
+            required
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            icon={<RefreshCw className="h-4 w-4" />}
+            onClick={() => void requestTranslation(true)}
+            disabled={translationLoading || !form.english.trim()}
+          >
+            Предложить перевод ещё раз
+          </Button>
+        </div>
       </div>
 
       <Textarea
@@ -175,7 +222,10 @@ export function WordForm({ initialWord }: WordFormProps) {
         <Button type="button" variant="ghost" onClick={() => router.back()}>
           Отмена
         </Button>
-        <Button type="submit" variant="primary" icon={<Save className="h-4 w-4" />} disabled={submitting}>
+        <Button type="submit" variant="secondary" icon={<Dumbbell className="h-4 w-4" />} disabled={submitting} onClick={() => setSubmitIntent("training")}>
+          Сохранить и начать тренировку
+        </Button>
+        <Button type="submit" variant="primary" icon={<Save className="h-4 w-4" />} disabled={submitting} onClick={() => setSubmitIntent("card")}>
           {submitting ? "Сохранение..." : isEditMode ? "Сохранить изменения" : "Добавить слово"}
         </Button>
       </div>

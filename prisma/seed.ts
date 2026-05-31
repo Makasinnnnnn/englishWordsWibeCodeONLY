@@ -2,12 +2,16 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+function normalizeEnglishWord(word: string) {
+  return word.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
 const demoWords = [
   {
     english: "apple",
     translation: "яблоко",
     association: "Apple logo / фрукт",
-    imageUrl: "https://source.unsplash.com/640x420/?apple,fruit&sig=11",
+    imageUrl: "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?auto=format&fit=crop&w=640&q=80",
     notes: "Связать бренд Apple с настоящим яблоком.",
     difficulty: "easy"
   },
@@ -15,7 +19,7 @@ const demoWords = [
     english: "book",
     translation: "книга",
     association: "учебник",
-    imageUrl: "https://source.unsplash.com/640x420/?book,study&sig=12",
+    imageUrl: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&w=640&q=80",
     notes: "Book звучит коротко и похоже на закрывающуюся книгу.",
     difficulty: "easy"
   },
@@ -23,7 +27,7 @@ const demoWords = [
     english: "river",
     translation: "река",
     association: "поток воды",
-    imageUrl: "https://source.unsplash.com/640x420/?river,water&sig=13",
+    imageUrl: "https://images.unsplash.com/photo-1437482078695-73f5ca6c96e2?auto=format&fit=crop&w=640&q=80",
     notes: "Представить длинный поток, который тянется через карту.",
     difficulty: "medium"
   },
@@ -31,7 +35,7 @@ const demoWords = [
     english: "cloud",
     translation: "облако",
     association: "белое облако",
-    imageUrl: "https://source.unsplash.com/640x420/?cloud,sky&sig=14",
+    imageUrl: "https://images.unsplash.com/photo-1534088568595-a066f410bcda?auto=format&fit=crop&w=640&q=80",
     notes: "Cloud также используется для облачных сервисов.",
     difficulty: "medium"
   },
@@ -39,7 +43,7 @@ const demoWords = [
     english: "fire",
     translation: "огонь",
     association: "пламя",
-    imageUrl: "https://source.unsplash.com/640x420/?fire,flame&sig=15",
+    imageUrl: "https://images.unsplash.com/photo-1517594422361-5eeb8ae275a9?auto=format&fit=crop&w=640&q=80",
     notes: "Представить яркое пламя и слово fire.",
     difficulty: "hard"
   }
@@ -48,11 +52,21 @@ const demoWords = [
 async function main() {
   for (const word of demoWords) {
     const existing = await prisma.word.findFirst({
-      where: { english: word.english }
+      where: { englishNormalized: normalizeEnglishWord(word.english) }
     });
 
     if (!existing) {
-      await prisma.word.create({ data: word });
+      await prisma.word.create({
+        data: {
+          ...word,
+          englishNormalized: normalizeEnglishWord(word.english)
+        }
+      });
+    } else if (!existing.imageUrl || existing.imageUrl.includes("source.unsplash.com")) {
+      await prisma.word.update({
+        where: { id: existing.id },
+        data: { imageUrl: word.imageUrl }
+      });
     }
   }
 }

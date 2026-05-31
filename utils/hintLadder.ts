@@ -45,7 +45,7 @@ export function getHintVisibility(step: number, totalSteps: number): HintVisibil
       showTranslation: true,
       showAssociation: false,
       showImage: false,
-      showNotes: true,
+      showNotes: false,
       showFirstLetter: true,
       showWordLength: true,
       requireManualInput: true
@@ -65,10 +65,23 @@ export function getHintVisibility(step: number, totalSteps: number): HintVisibil
     };
   }
 
+  if (boundedStep === 3) {
+    return {
+      showEnglish: false,
+      showTranslation: true,
+      showAssociation: true,
+      showImage: false,
+      showNotes: true,
+      showFirstLetter: true,
+      showWordLength: true,
+      requireManualInput: false
+    };
+  }
+
   return {
     showEnglish: false,
     showTranslation: true,
-    showAssociation: true,
+    showAssociation: false,
     showImage: false,
     showNotes: true,
     showFirstLetter: true,

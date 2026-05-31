@@ -56,20 +56,24 @@ export function WordCard({ word, detail = false, afterDeleteHref = "/words" }: W
     }
   }
 
-  async function markLearned() {
+  async function toggleLearned() {
+    const nextIsLearned = !word.isLearned;
     setBusy(true);
     try {
       const response = await fetch(`/api/words/${word.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isLearned: true, learningLevel: 5 })
+        body: JSON.stringify({
+          isLearned: nextIsLearned,
+          learningLevel: nextIsLearned ? 5 : Math.min(word.learningLevel, 4)
+        })
       });
 
       if (!response.ok) {
         throw new Error("Update failed");
       }
 
-      showToast("Слово отмечено как выученное", "success");
+      showToast(nextIsLearned ? "Слово отмечено как выученное" : "Слово возвращено в обучение", "success");
       router.refresh();
     } catch {
       showToast("Не удалось обновить слово", "error");
@@ -131,6 +135,16 @@ export function WordCard({ word, detail = false, afterDeleteHref = "/words" }: W
               {word.wrongCount} / {word.typoCount}
             </dd>
           </div>
+          <div className="muted-panel p-3">
+            <dt className="text-slate-500">Повторов / серия</dt>
+            <dd className="mt-1 text-slate-200">
+              {word.reviewCount} / {word.streak}
+            </dd>
+          </div>
+          <div className="muted-panel p-3">
+            <dt className="text-slate-500">Следующее повторение</dt>
+            <dd className="mt-1 text-slate-200">{formatDate(word.nextReviewAt)}</dd>
+          </div>
         </dl>
 
         {detail && word.notes ? (
@@ -151,8 +165,8 @@ export function WordCard({ word, detail = false, afterDeleteHref = "/words" }: W
               Редактировать
             </Button>
           </Link>
-          <Button type="button" variant="success" icon={<CheckCircle2 className="h-4 w-4" />} onClick={() => void markLearned()} disabled={busy || word.isLearned}>
-            Выучено
+          <Button type="button" variant={word.isLearned ? "warning" : "success"} icon={<CheckCircle2 className="h-4 w-4" />} onClick={() => void toggleLearned()} disabled={busy}>
+            {word.isLearned ? "Вернуть в обучение" : "Выучено"}
           </Button>
           <Button type="button" variant="danger" icon={<Trash2 className="h-4 w-4" />} onClick={() => void deleteWord()} disabled={busy}>
             Удалить

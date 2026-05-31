@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { GalleryHorizontal, Keyboard, ListChecks, Mountain, Shuffle, Sparkles, SpellCheck } from "lucide-react";
 
+import { Button } from "@/components/Button";
 import { EmptyState } from "@/components/EmptyState";
 import { HintLadderTraining } from "@/components/HintLadderTraining";
 import { ManualInputQuiz } from "@/components/ManualInputQuiz";
@@ -12,7 +14,7 @@ import { defaultTrainingSettings, mergeTrainingSettings, trainingSettingsStorage
 import type { WordView } from "@/lib/wordSerializer";
 import { cn } from "@/utils/cn";
 import type { HintVisibility } from "@/utils/hintLadder";
-import { shuffleArray, sortWordsForTraining } from "@/utils/trainingQueue";
+import { getTrainingQueue } from "@/utils/trainingQueue";
 
 type TrainingWorkspaceProps = {
   initialWords: WordView[];
@@ -22,12 +24,12 @@ type TrainingWorkspaceProps = {
 type TrainingMode = "ladder" | "multiple" | "manual" | "reverse" | "image" | "progressive";
 
 const modes: Array<{ id: TrainingMode; label: string; icon: typeof Sparkles; primary?: boolean }> = [
-  { id: "ladder", label: "Hint Ladder", icon: Mountain, primary: true },
-  { id: "multiple", label: "Multiple Choice", icon: ListChecks },
-  { id: "manual", label: "Manual Input", icon: Keyboard },
-  { id: "reverse", label: "Reverse Translation", icon: SpellCheck },
-  { id: "image", label: "Image Association", icon: GalleryHorizontal },
-  { id: "progressive", label: "Progressive Hints", icon: Shuffle }
+  { id: "ladder", label: "Главный режим", icon: Mountain, primary: true },
+  { id: "multiple", label: "Тест", icon: ListChecks },
+  { id: "manual", label: "Ручной ввод", icon: Keyboard },
+  { id: "reverse", label: "Обратный перевод", icon: SpellCheck },
+  { id: "image", label: "Картинка и ассоциация", icon: GalleryHorizontal },
+  { id: "progressive", label: "Короткий главный", icon: Shuffle }
 ];
 
 function visibilityFromSettings(settings: TrainingSettings): HintVisibility {
@@ -49,22 +51,31 @@ export function TrainingWorkspace({ initialWords, startWordId }: TrainingWorkspa
   const [mode, setMode] = useState<TrainingMode>("ladder");
   const [index, setIndex] = useState(0);
   const [startResolved, setStartResolved] = useState(false);
+  const [includeLearned, setIncludeLearned] = useState(false);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
 
   useEffect(() => {
     const raw = window.localStorage.getItem(trainingSettingsStorageKey);
     if (raw) {
       setSettings(mergeTrainingSettings(JSON.parse(raw) as Partial<TrainingSettings>));
     }
+    setSettingsLoaded(true);
   }, []);
 
   useEffect(() => {
+    if (!settingsLoaded) {
+      return;
+    }
+
     window.localStorage.setItem(trainingSettingsStorageKey, JSON.stringify(settings));
-  }, [settings]);
+  }, [settings, settingsLoaded]);
 
   const queue = useMemo(() => {
-    const sorted = sortWordsForTraining(words);
-    return settings.shuffleWords ? shuffleArray(sorted) : sorted;
-  }, [settings.shuffleWords, words]);
+    return getTrainingQueue(words, {
+      includeLearned,
+      shuffleWithinPriority: settings.shuffleWords
+    });
+  }, [includeLearned, settings.shuffleWords, words]);
 
   useEffect(() => {
     if (!startWordId || startResolved) {
@@ -88,8 +99,28 @@ export function TrainingWorkspace({ initialWords, startWordId }: TrainingWorkspa
     setIndex((current) => (queue.length > 0 ? (current + 1) % queue.length : 0));
   }
 
-  if (queue.length === 0) {
+  if (words.length === 0) {
     return <EmptyState title="Словарь пуст" description="Словарь пуст. Добавьте первое слово, чтобы начать тренировку." actionLabel="Добавить слово" actionHref="/words/new" />;
+  }
+
+  if (queue.length === 0) {
+    return (
+      <div className="panel flex min-h-80 flex-col items-center justify-center px-6 py-12 text-center">
+        <p className="text-xs uppercase tracking-[0.16em] text-emerald-200/80">Training complete</p>
+        <h2 className="mt-3 text-2xl font-semibold text-white">Все слова выучены</h2>
+        <p className="mt-2 max-w-xl text-sm leading-6 text-slate-400">Можно повторить выученные слова в свободном режиме или добавить новые слова в словарь.</p>
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <Button type="button" variant="primary" onClick={() => setIncludeLearned(true)}>
+            Повторить выученные
+          </Button>
+          <Link href="/words/new">
+            <Button type="button" variant="secondary">
+              Добавить слово
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   const baseVisibility = visibilityFromSettings(settings);
@@ -158,12 +189,13 @@ export function TrainingWorkspace({ initialWords, startWordId }: TrainingWorkspa
         ) : null}
 
         {mode === "reverse" ? (
-          <ManualInputQuiz
+          <MultipleChoiceQuiz
             word={currentWord}
+            words={queue}
             visibility={reverseVisibility}
-            title="Reverse Translation"
-            question="Введите перевод"
-            correctAnswer={currentWord.translation}
+            title="Обратный перевод"
+            answerField="translation"
+            fallbackOptions={["яблоко", "книга", "река", "облако", "огонь", "память"]}
             onNext={nextWord}
             onReviewed={handleReviewed}
           />
@@ -173,7 +205,7 @@ export function TrainingWorkspace({ initialWords, startWordId }: TrainingWorkspa
           <ManualInputQuiz
             word={currentWord}
             visibility={imageVisibility}
-            title="Image Association"
+            title="Картинка и ассоциация"
             question="Вспомните английское слово по картинке и ассоциации"
             correctAnswer={currentWord.english}
             onNext={nextWord}
@@ -182,7 +214,7 @@ export function TrainingWorkspace({ initialWords, startWordId }: TrainingWorkspa
         ) : null}
 
         {mode === "progressive" ? (
-          <HintLadderTraining word={currentWord} settings={{ ...settings, ladder: { ...settings.ladder, totalSteps: 5 } }} title="Progressive Hints" onNext={nextWord} onReviewed={handleReviewed} />
+          <HintLadderTraining word={currentWord} settings={{ ...settings, ladder: { ...settings.ladder, totalSteps: 5 } }} title="Короткий главный" onNext={nextWord} onReviewed={handleReviewed} />
         ) : null}
       </div>
     </div>
