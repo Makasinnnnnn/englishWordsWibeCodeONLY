@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 
 import { apiError, isPrismaNotFound, isPrismaUniqueViolation, validationError } from "@/lib/apiResponse";
+import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { wordUpdateSchema } from "@/lib/schemas";
 import { normalizeEnglishWord } from "@/lib/wordLogic";
@@ -17,8 +18,14 @@ type RouteContext = {
 
 export async function GET(_request: NextRequest, { params }: RouteContext) {
   try {
-    const word = await prisma.word.findUnique({
-      where: { id: params.id }
+    const user = await getCurrentUser();
+
+    if (!user) {
+      return apiError("Authentication required", { status: 401, code: "UNAUTHORIZED" });
+    }
+
+    const word = await prisma.word.findFirst({
+      where: { id: params.id, userId: user.id }
     });
 
     if (!word) {
@@ -33,6 +40,21 @@ export async function GET(_request: NextRequest, { params }: RouteContext) {
 
 export async function PUT(request: NextRequest, { params }: RouteContext) {
   try {
+    const user = await getCurrentUser();
+
+    if (!user) {
+      return apiError("Authentication required", { status: 401, code: "UNAUTHORIZED" });
+    }
+
+    const existingWord = await prisma.word.findFirst({
+      where: { id: params.id, userId: user.id },
+      select: { id: true }
+    });
+
+    if (!existingWord) {
+      return apiError("Word not found", { status: 404, code: "WORD_NOT_FOUND" });
+    }
+
     const payload = wordUpdateSchema.parse(await request.json());
     const { nextReviewAt, ...restPayload } = payload;
     const word = await prisma.word.update({
@@ -67,6 +89,21 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
 
 export async function DELETE(_request: NextRequest, { params }: RouteContext) {
   try {
+    const user = await getCurrentUser();
+
+    if (!user) {
+      return apiError("Authentication required", { status: 401, code: "UNAUTHORIZED" });
+    }
+
+    const existingWord = await prisma.word.findFirst({
+      where: { id: params.id, userId: user.id },
+      select: { id: true }
+    });
+
+    if (!existingWord) {
+      return apiError("Word not found", { status: 404, code: "WORD_NOT_FOUND" });
+    }
+
     await prisma.word.delete({
       where: { id: params.id }
     });

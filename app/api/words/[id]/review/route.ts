@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 
 import { apiError, validationError } from "@/lib/apiResponse";
+import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { reviewSchema } from "@/lib/schemas";
 import { getReviewUpdateState } from "@/lib/wordLogic";
@@ -17,9 +18,15 @@ type RouteContext = {
 
 export async function POST(request: NextRequest, { params }: RouteContext) {
   try {
+    const user = await getCurrentUser();
+
+    if (!user) {
+      return apiError("Authentication required", { status: 401, code: "UNAUTHORIZED" });
+    }
+
     const { result } = reviewSchema.parse(await request.json());
-    const existingWord = await prisma.word.findUnique({
-      where: { id: params.id }
+    const existingWord = await prisma.word.findFirst({
+      where: { id: params.id, userId: user.id }
     });
 
     if (!existingWord) {

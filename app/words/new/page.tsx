@@ -1,6 +1,11 @@
 import { WordForm } from "@/components/WordForm";
+import { requireUser } from "@/lib/auth";
 
-export default function NewWordPage() {
+export const dynamic = "force-dynamic";
+
+export default async function NewWordPage() {
+  await requireUser();
+
   return (
     <div className="mx-auto max-w-4xl space-y-5">
       <div>

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { BarChart3, BookOpen, Dumbbell, PlusCircle, Settings, Sparkles } from "lucide-react";
 
 import { cn } from "@/utils/cn";
+import type { AuthUser } from "@/lib/auth";
 
 const navigation = [
   { href: "/", label: "Главная", icon: BarChart3 },
@@ -14,8 +15,12 @@ const navigation = [
   { href: "/settings", label: "Настройки", icon: Settings }
 ];
 
-export function Sidebar() {
+export function Sidebar({ user }: { user: AuthUser | null }) {
   const pathname = usePathname();
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <aside className="sticky top-0 hidden h-screen w-72 shrink-0 border-r border-white/10 bg-graphite-950/85 px-4 py-5 backdrop-blur lg:block">

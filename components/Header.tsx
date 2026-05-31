@@ -5,20 +5,24 @@ import { usePathname } from "next/navigation";
 import { Dumbbell, Menu, PlusCircle } from "lucide-react";
 
 import { Button } from "@/components/Button";
+import { LogoutButton } from "@/components/LogoutButton";
+import type { AuthUser } from "@/lib/auth";
 
 const titles: Array<[string, string]> = [
-  ["/words/new", "Добавление слова"],
-  ["/words", "Словарь"],
-  ["/training", "Тренировка"],
-  ["/settings", "Настройки"],
-  ["/", "Панель обучения"]
+  ["/login", "Log in"],
+  ["/register", "Create account"],
+  ["/words/new", "Р”РѕР±Р°РІР»РµРЅРёРµ СЃР»РѕРІР°"],
+  ["/words", "РЎР»РѕРІР°СЂСЊ"],
+  ["/training", "РўСЂРµРЅРёСЂРѕРІРєР°"],
+  ["/settings", "РќР°СЃС‚СЂРѕР№РєРё"],
+  ["/", "РџР°РЅРµР»СЊ РѕР±СѓС‡РµРЅРёСЏ"]
 ];
 
 function getTitle(pathname: string) {
   return titles.find(([path]) => (path === "/" ? pathname === "/" : pathname.startsWith(path)))?.[1] ?? "Word Memory Trainer";
 }
 
-export function Header() {
+export function Header({ user }: { user: AuthUser | null }) {
   const pathname = usePathname();
 
   return (
@@ -29,22 +33,25 @@ export function Header() {
           <h1 className="truncate text-xl font-semibold text-white">{getTitle(pathname)}</h1>
         </div>
 
-        <div className="hidden items-center gap-2 sm:flex">
-          <Link href="/words/new">
-            <Button variant="secondary" icon={<PlusCircle className="h-4 w-4" />}>
-              Добавить слово
-            </Button>
-          </Link>
-          <Link href="/training">
-            <Button variant="primary" icon={<Dumbbell className="h-4 w-4" />}>
-              Начать тренировку
-            </Button>
-          </Link>
-        </div>
+        {user ? (
+          <div className="hidden items-center gap-2 sm:flex">
+            <Link href="/words/new">
+              <Button variant="secondary" icon={<PlusCircle className="h-4 w-4" />}>
+                Р”РѕР±Р°РІРёС‚СЊ СЃР»РѕРІРѕ
+              </Button>
+            </Link>
+            <Link href="/training">
+              <Button variant="primary" icon={<Dumbbell className="h-4 w-4" />}>
+                РќР°С‡Р°С‚СЊ С‚СЂРµРЅРёСЂРѕРІРєСѓ
+              </Button>
+            </Link>
+            <LogoutButton />
+          </div>
+        ) : null}
 
         <div className="sm:hidden">
-          <Link href="/words">
-            <Button variant="ghost" size="icon" aria-label="Открыть навигацию" icon={<Menu className="h-5 w-5" />} />
+          <Link href={user ? "/words" : "/login"}>
+            <Button variant="ghost" size="icon" aria-label="Open navigation" icon={<Menu className="h-5 w-5" />} />
           </Link>
         </div>
       </div>

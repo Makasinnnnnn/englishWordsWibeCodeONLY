@@ -50,15 +50,28 @@ const demoWords = [
 ];
 
 async function main() {
+  const demoUser = await prisma.user.upsert({
+    where: { email: "demo@example.com" },
+    update: {},
+    create: {
+      email: "demo@example.com",
+      passwordHash: "seeded-demo-user"
+    }
+  });
+
   for (const word of demoWords) {
     const existing = await prisma.word.findFirst({
-      where: { englishNormalized: normalizeEnglishWord(word.english) }
+      where: {
+        userId: demoUser.id,
+        englishNormalized: normalizeEnglishWord(word.english)
+      }
     });
 
     if (!existing) {
       await prisma.word.create({
         data: {
           ...word,
+          userId: demoUser.id,
           englishNormalized: normalizeEnglishWord(word.english)
         }
       });

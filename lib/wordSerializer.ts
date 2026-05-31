@@ -1,6 +1,6 @@
 import type { Word } from "@prisma/client";
 
-export type WordView = Omit<Word, "englishNormalized" | "createdAt" | "updatedAt" | "lastReviewedAt" | "nextReviewAt"> & {
+export type WordView = Omit<Word, "userId" | "englishNormalized" | "createdAt" | "updatedAt" | "lastReviewedAt" | "nextReviewAt"> & {
   createdAt: string;
   updatedAt: string;
   lastReviewedAt: string | null;
@@ -8,7 +8,7 @@ export type WordView = Omit<Word, "englishNormalized" | "createdAt" | "updatedAt
 };
 
 export function serializeWord(word: Word): WordView {
-  const { englishNormalized: _englishNormalized, ...publicWord } = word;
+  const { userId: _userId, englishNormalized: _englishNormalized, ...publicWord } = word;
 
   return {
     ...publicWord,

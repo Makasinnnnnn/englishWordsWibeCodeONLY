@@ -5,19 +5,22 @@ import { Button } from "@/components/Button";
 import { EmptyState } from "@/components/EmptyState";
 import { StatsCards } from "@/components/StatsCards";
 import { WordCard } from "@/components/WordCard";
+import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { serializeWords } from "@/lib/wordSerializer";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
+  const user = await requireUser();
   const words = serializeWords(
     await prisma.word.findMany({
+      where: { userId: user.id },
       orderBy: [{ updatedAt: "desc" }],
       take: 6
     })
   );
-  const allWords = serializeWords(await prisma.word.findMany());
+  const allWords = serializeWords(await prisma.word.findMany({ where: { userId: user.id } }));
   const now = Date.now();
   const dueWords = allWords
     .filter((word) => !word.isLearned && (!word.nextReviewAt || new Date(word.nextReviewAt).getTime() <= now))

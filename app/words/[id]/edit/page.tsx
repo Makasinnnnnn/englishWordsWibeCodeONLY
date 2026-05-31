@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { WordForm } from "@/components/WordForm";
+import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { serializeWord } from "@/lib/wordSerializer";
 
@@ -13,8 +14,9 @@ type EditWordPageProps = {
 };
 
 export default async function EditWordPage({ params }: EditWordPageProps) {
-  const word = await prisma.word.findUnique({
-    where: { id: params.id }
+  const user = await requireUser();
+  const word = await prisma.word.findFirst({
+    where: { id: params.id, userId: user.id }
   });
 
   if (!word) {

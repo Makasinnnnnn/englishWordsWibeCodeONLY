@@ -1,13 +1,16 @@
 import { EmptyState } from "@/components/EmptyState";
 import { WordListClient } from "@/components/WordListClient";
+import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { serializeWords } from "@/lib/wordSerializer";
 
 export const dynamic = "force-dynamic";
 
 export default async function WordsPage() {
+  const user = await requireUser();
   const words = serializeWords(
     await prisma.word.findMany({
+      where: { userId: user.id },
       orderBy: [{ isLearned: "asc" }, { learningLevel: "asc" }, { updatedAt: "desc" }]
     })
   );
