@@ -15,7 +15,13 @@ const passwordDigest = "sha256";
 export type AuthUser = Pick<User, "id" | "email">;
 
 function normalizeEmail(email: string) {
-  return email.trim().toLowerCase();
+  const value = email.trim().toLowerCase();
+
+  if (!value.includes("@")) {
+    return `${value}@local.uchi-slovo`;
+  }
+
+  return value;
 }
 
 export function hashPassword(password: string) {

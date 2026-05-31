@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!user || !verifyPassword(payload.password, user.passwordHash)) {
-      return apiError("Invalid email or password", {
+      return apiError("Неверный логин или пароль", {
         status: 401,
         code: "INVALID_CREDENTIALS"
       });
@@ -35,6 +35,6 @@ export async function POST(request: NextRequest) {
       return validationError(error);
     }
 
-    return apiError("Failed to log in");
+    return apiError("Не удалось войти");
   }
 }

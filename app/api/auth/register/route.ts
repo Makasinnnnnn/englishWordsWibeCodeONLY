@@ -31,12 +31,12 @@ export async function POST(request: NextRequest) {
     }
 
     if (isPrismaUniqueViolation(error)) {
-      return apiError("User already exists", {
+      return apiError("Такой пользователь уже существует", {
         status: 409,
         code: "USER_ALREADY_EXISTS"
       });
     }
 
-    return apiError("Failed to register");
+    return apiError("Не удалось создать аккаунт");
   }
 }
