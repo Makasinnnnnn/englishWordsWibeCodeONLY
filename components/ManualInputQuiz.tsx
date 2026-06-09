@@ -34,7 +34,15 @@ const resultIcons = {
   wrong: XCircle
 };
 
-export function ManualInputQuiz({ word, visibility, correctAnswer = word.english, title = "Ручной ввод", question = "Введите английское слово", onNext, onReviewed }: ManualInputQuizProps) {
+export function ManualInputQuiz({
+  word,
+  visibility,
+  correctAnswer = word.english,
+  title = "Ручной ввод",
+  question = "Введите английское слово",
+  onNext,
+  onReviewed
+}: ManualInputQuizProps) {
   const [answer, setAnswer] = useState("");
   const [result, setResult] = useState<CheckAnswerResult | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
@@ -102,19 +110,35 @@ export function ManualInputQuiz({ word, visibility, correctAnswer = word.english
               disabled={result?.status === "correct"}
             />
           </div>
-          <Button type="submit" variant="primary" icon={<Keyboard className="h-4 w-4" />} disabled={busy || !answer.trim()}>
+          <Button
+            type="submit"
+            variant="primary"
+            icon={<Keyboard className="h-4 w-4" />}
+            disabled={busy || !answer.trim()}
+          >
             Проверить
           </Button>
         </form>
 
-        {showAnswer ? <div className="mt-4 rounded-lg border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-slate-300">Правильный ответ: {correctAnswer}</div> : null}
+        {showAnswer ? (
+          <div className="mt-4 rounded-lg border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-slate-300">
+            Правильный ответ: {correctAnswer}
+          </div>
+        ) : null}
 
         {result && ResultIcon ? (
-          <div className={cn("mt-4 flex items-start gap-2 rounded-lg border px-4 py-3 text-sm", resultStyles[result.status])}>
+          <div
+            className={cn(
+              "mt-4 flex items-start gap-2 rounded-lg border px-4 py-3 text-sm",
+              resultStyles[result.status]
+            )}
+          >
             <ResultIcon className="mt-0.5 h-4 w-4 shrink-0" />
             <div>
               <p>{result.message}</p>
-              {result.status === "typo" ? <p className="mt-1 text-xs opacity-80">Расстояние Левенштейна: {result.distance}</p> : null}
+              {result.status === "typo" ? (
+                <p className="mt-1 text-xs opacity-80">Расстояние Левенштейна: {result.distance}</p>
+              ) : null}
             </div>
           </div>
         ) : null}

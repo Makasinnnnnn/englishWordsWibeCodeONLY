@@ -16,7 +16,14 @@ export default async function WordsPage() {
   );
 
   if (words.length === 0) {
-    return <EmptyState title="Словарь пуст" description="Словарь пуст. Добавьте первое слово." actionLabel="Добавить слово" actionHref="/words/new" />;
+    return (
+      <EmptyState
+        title="Словарь пуст"
+        description="Словарь пуст. Добавьте первое слово."
+        actionLabel="Добавить слово"
+        actionHref="/words/new"
+      />
+    );
   }
 
   return (

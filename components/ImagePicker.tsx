@@ -104,24 +104,55 @@ export function ImagePicker({ value, onChange, word, association }: ImagePickerP
             disabled={isUploadedImage}
           />
         </div>
-        <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(event) => handleFileChange(event.target.files?.[0])} />
-        <Button type="button" variant="secondary" icon={<Upload className="h-4 w-4" />} onClick={() => fileInputRef.current?.click()}>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(event) => handleFileChange(event.target.files?.[0])}
+        />
+        <Button
+          type="button"
+          variant="secondary"
+          icon={<Upload className="h-4 w-4" />}
+          onClick={() => fileInputRef.current?.click()}
+        >
           Загрузить свою
         </Button>
-        <Button type="button" variant="secondary" icon={<RefreshCw className="h-4 w-4" />} onClick={() => void loadSuggestions()} disabled={loading}>
+        <Button
+          type="button"
+          variant="secondary"
+          icon={<RefreshCw className="h-4 w-4" />}
+          onClick={() => void loadSuggestions()}
+          disabled={loading}
+        >
           {loading ? "Загрузка..." : "Обновить"}
         </Button>
         {value ? (
-          <Button type="button" variant="ghost" size="icon" icon={<Trash2 className="h-4 w-4" />} aria-label="Очистить картинку" onClick={() => onChange("")} />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            icon={<Trash2 className="h-4 w-4" />}
+            aria-label="Очистить картинку"
+            onClick={() => onChange("")}
+          />
         ) : null}
       </div>
-      <p className="text-xs text-slate-500">Можно выбрать картинку из предложений, вставить URL или загрузить свою картинку с компьютера.</p>
+      <p className="text-xs text-slate-500">
+        Можно выбрать картинку из предложений, вставить URL или загрузить свою картинку с компьютера.
+      </p>
       {error ? <p className="text-xs text-amber-300">{error}</p> : null}
 
       {value && !previewBroken ? (
         <div className="overflow-hidden rounded-lg border border-white/10 bg-white/[0.035]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={value} alt="Выбранная ассоциация" className="aspect-[16/10] w-full object-cover" onError={() => setPreviewBroken(true)} />
+          <img
+            src={value}
+            alt="Выбранная ассоциация"
+            className="aspect-[16/10] w-full object-cover"
+            onError={() => setPreviewBroken(true)}
+          />
         </div>
       ) : (
         <ImageFallback label={value ? "Картинка не загрузилась" : "Preview выбранной картинки"} />
@@ -129,7 +160,12 @@ export function ImagePicker({ value, onChange, word, association }: ImagePickerP
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {loading
-          ? Array.from({ length: 4 }, (_, index) => <div key={index} className="aspect-[16/10] animate-pulse rounded-lg border border-white/10 bg-white/[0.05]" />)
+          ? Array.from({ length: 4 }, (_, index) => (
+              <div
+                key={index}
+                className="aspect-[16/10] animate-pulse rounded-lg border border-white/10 bg-white/[0.05]"
+              />
+            ))
           : null}
         {suggestions.map((image) => {
           const isSelected = value === image;
@@ -145,7 +181,11 @@ export function ImagePicker({ value, onChange, word, association }: ImagePickerP
               onClick={() => onChange(image)}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={image} alt="Вариант картинки" className="aspect-[16/10] w-full object-cover transition group-hover:scale-[1.02]" />
+              <img
+                src={image}
+                alt="Вариант картинки"
+                className="aspect-[16/10] w-full object-cover transition group-hover:scale-[1.02]"
+              />
             </button>
           );
         })}

@@ -16,9 +16,24 @@ export function StatsCards({ words }: StatsCardsProps) {
 
   const stats = [
     { label: "Всего слов", value: totalWords, icon: BookOpen, tone: "text-sky-200 bg-sky-400/10 border-sky-300/20" },
-    { label: "Выучено", value: learnedWords, icon: CheckCircle2, tone: "text-emerald-200 bg-emerald-400/10 border-emerald-300/20" },
-    { label: "На повторении", value: reviewWords, icon: Repeat2, tone: "text-amber-200 bg-amber-400/10 border-amber-300/20" },
-    { label: "Правильных", value: `${averageCorrect}%`, icon: Target, tone: "text-violet-200 bg-violet-400/10 border-violet-300/20" }
+    {
+      label: "Выучено",
+      value: learnedWords,
+      icon: CheckCircle2,
+      tone: "text-emerald-200 bg-emerald-400/10 border-emerald-300/20"
+    },
+    {
+      label: "На повторении",
+      value: reviewWords,
+      icon: Repeat2,
+      tone: "text-amber-200 bg-amber-400/10 border-amber-300/20"
+    },
+    {
+      label: "Правильных",
+      value: `${averageCorrect}%`,
+      icon: Target,
+      tone: "text-violet-200 bg-violet-400/10 border-violet-300/20"
+    }
   ];
 
   return (

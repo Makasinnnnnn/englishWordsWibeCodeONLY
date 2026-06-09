@@ -24,8 +24,16 @@ export function ProgressBar({ value, max = 100, label, tone = "sky" }: ProgressB
           <span>{Math.round(percent)}%</span>
         </div>
       ) : null}
-      <div className="h-2 overflow-hidden rounded-full bg-white/10" role="progressbar" aria-valuenow={value} aria-valuemax={max}>
-        <div className={cn("h-full rounded-full bg-gradient-to-r transition-all", tones[tone])} style={{ width: `${percent}%` }} />
+      <div
+        className="h-2 overflow-hidden rounded-full bg-white/10"
+        role="progressbar"
+        aria-valuenow={value}
+        aria-valuemax={max}
+      >
+        <div
+          className={cn("h-full rounded-full bg-gradient-to-r transition-all", tones[tone])}
+          style={{ width: `${percent}%` }}
+        />
       </div>
     </div>
   );

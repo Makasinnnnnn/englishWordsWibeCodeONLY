@@ -59,41 +59,47 @@ export function WordForm({ initialWord }: WordFormProps) {
 
   const isEditMode = Boolean(initialWord);
 
-  const canSuggestTranslation = useMemo(() => form.english.trim().length > 1 && !translationTouched && !isEditMode, [form.english, isEditMode, translationTouched]);
+  const canSuggestTranslation = useMemo(
+    () => form.english.trim().length > 1 && !translationTouched && !isEditMode,
+    [form.english, isEditMode, translationTouched]
+  );
 
-  const requestTranslation = useCallback(async (force = false, signal?: AbortSignal) => {
-    if (!form.english.trim()) {
-      setTranslationMessage("Введите английское слово");
-      return;
-    }
+  const requestTranslation = useCallback(
+    async (force = false, signal?: AbortSignal) => {
+      if (!form.english.trim()) {
+        setTranslationMessage("Введите английское слово");
+        return;
+      }
 
-    setTranslationLoading(true);
-    setTranslationMessage("");
-    try {
-      const params = new URLSearchParams({ word: form.english });
-      const response = await fetch(`/api/suggest/translation?${params.toString()}`, { signal });
-      const data = (await response.json()) as { translation: string; message: string };
+      setTranslationLoading(true);
+      setTranslationMessage("");
+      try {
+        const params = new URLSearchParams({ word: form.english });
+        const response = await fetch(`/api/suggest/translation?${params.toString()}`, { signal });
+        const data = (await response.json()) as { translation: string; message: string };
 
-      if (data.translation) {
-        if (force || !translationTouched) {
-          setForm((current) => ({ ...current, translation: data.translation }));
+        if (data.translation) {
+          if (force || !translationTouched) {
+            setForm((current) => ({ ...current, translation: data.translation }));
+          }
+          setTranslationMessage("Предложен mock-перевод");
+        } else {
+          setTranslationMessage(data.message || "Введите перевод вручную");
         }
-        setTranslationMessage("Предложен mock-перевод");
-      } else {
-        setTranslationMessage(data.message || "Введите перевод вручную");
-      }
 
-      if (force) {
-        setTranslationTouched(true);
+        if (force) {
+          setTranslationTouched(true);
+        }
+      } catch (error) {
+        if ((error as Error).name !== "AbortError") {
+          setTranslationMessage("Не удалось предложить перевод");
+        }
+      } finally {
+        setTranslationLoading(false);
       }
-    } catch (error) {
-      if ((error as Error).name !== "AbortError") {
-        setTranslationMessage("Не удалось предложить перевод");
-      }
-    } finally {
-      setTranslationLoading(false);
-    }
-  }, [form.english, translationTouched]);
+    },
+    [form.english, translationTouched]
+  );
 
   useEffect(() => {
     if (!canSuggestTranslation) {
@@ -122,7 +128,9 @@ export function WordForm({ initialWord }: WordFormProps) {
     const parsed = wordMutationSchema.safeParse(form);
     if (!parsed.success) {
       const fieldErrors = parsed.error.flatten().fieldErrors;
-      setErrors(Object.fromEntries(Object.entries(fieldErrors).map(([key, value]) => [key, value?.[0] ?? "Invalid value"])));
+      setErrors(
+        Object.fromEntries(Object.entries(fieldErrors).map(([key, value]) => [key, value?.[0] ?? "Invalid value"]))
+      );
       return;
     }
 
@@ -207,12 +215,30 @@ export function WordForm({ initialWord }: WordFormProps) {
         error={errors.association}
       />
 
-      <ImagePicker value={form.imageUrl} onChange={(value) => updateField("imageUrl", value)} word={form.english} association={form.association} />
+      <ImagePicker
+        value={form.imageUrl}
+        onChange={(value) => updateField("imageUrl", value)}
+        word={form.english}
+        association={form.association}
+      />
       {errors.imageUrl ? <p className="-mt-2 text-xs text-red-300">{errors.imageUrl}</p> : null}
 
-      <Textarea label="Notes" name="notes" value={form.notes} onChange={(event) => updateField("notes", event.target.value)} placeholder="Необязательные заметки" error={errors.notes} />
+      <Textarea
+        label="Notes"
+        name="notes"
+        value={form.notes}
+        onChange={(event) => updateField("notes", event.target.value)}
+        placeholder="Необязательные заметки"
+        error={errors.notes}
+      />
 
-      <Select label="Difficulty" name="difficulty" value={form.difficulty} onChange={(event) => updateField("difficulty", event.target.value as WordFormState["difficulty"])} error={errors.difficulty}>
+      <Select
+        label="Difficulty"
+        name="difficulty"
+        value={form.difficulty}
+        onChange={(event) => updateField("difficulty", event.target.value as WordFormState["difficulty"])}
+        error={errors.difficulty}
+      >
         <option value="easy">easy</option>
         <option value="medium">medium</option>
         <option value="hard">hard</option>
@@ -222,10 +248,22 @@ export function WordForm({ initialWord }: WordFormProps) {
         <Button type="button" variant="ghost" onClick={() => router.back()}>
           Отмена
         </Button>
-        <Button type="submit" variant="secondary" icon={<Dumbbell className="h-4 w-4" />} disabled={submitting} onClick={() => setSubmitIntent("training")}>
+        <Button
+          type="submit"
+          variant="secondary"
+          icon={<Dumbbell className="h-4 w-4" />}
+          disabled={submitting}
+          onClick={() => setSubmitIntent("training")}
+        >
           Сохранить и начать тренировку
         </Button>
-        <Button type="submit" variant="primary" icon={<Save className="h-4 w-4" />} disabled={submitting} onClick={() => setSubmitIntent("card")}>
+        <Button
+          type="submit"
+          variant="primary"
+          icon={<Save className="h-4 w-4" />}
+          disabled={submitting}
+          onClick={() => setSubmitIntent("card")}
+        >
           {submitting ? "Сохранение..." : isEditMode ? "Сохранить изменения" : "Добавить слово"}
         </Button>
       </div>

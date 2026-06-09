@@ -1,10 +1,43 @@
 # Word Memory Trainer
 
-Word Memory Trainer is a local web app for learning English words through a personal dictionary, translations, associations, images, progressive hints, multiple choice, and manual answer checks.
+Word Memory Trainer is a free vocabulary learning app for students. It helps create a personal English dictionary, practice translations, use associations and images, repeat difficult words, and track learning progress.
 
-The project is designed as a stable MVP that works without paid APIs. Translation and image suggestions are mock-based and can be replaced later with real providers.
+## Why This Project Exists
 
-## Stack
+This project started as a practical fullstack pet project: small enough to understand, but real enough to show product thinking, authentication, validation, persistence, testing, and documentation.
+
+The goal is not to imitate a huge SaaS product. The goal is a clean learning tool that classmates can actually use before English classes, tests, and exams.
+
+## For Classmates
+
+The app is designed as a free tool for classmates who want to prepare for English classes using personal vocabulary lists. CSV import/export makes it easy to exchange word lists without paid services.
+
+## Features
+
+- Email/password registration and login.
+- Telegram login/register through the Telegram Login Widget.
+- Telegram linking/unlinking from account settings.
+- Password reset by email, with a console mailer fallback in development.
+- Personal dictionary with English word, translation, association, image URL, notes, difficulty, and review state.
+- Word add/edit/delete/detail flows.
+- Training modes: hint ladder, multiple choice, manual input, reverse translation, image association, and progressive hints.
+- Typo detection with Levenshtein distance.
+- Review scheduling with level, streak, correct, wrong, typo, and next review fields.
+- CSV import/export from settings.
+- Account deletion with confirmation.
+
+## Screenshots
+
+Screenshots are intentionally not committed yet. Add real screenshots after running the app:
+
+```text
+docs/screenshots/dashboard.png
+docs/screenshots/training.png
+docs/screenshots/dictionary.png
+docs/screenshots/account-settings.png
+```
+
+## Tech Stack
 
 - Next.js App Router
 - TypeScript
@@ -13,184 +46,145 @@ The project is designed as a stable MVP that works without paid APIs. Translatio
 - SQLite
 - Zod
 - Vitest
-- Controlled React components
+- Nodemailer
+- Prettier
+- ESLint
 
-## Features
-
-- Personal dictionary with English word, translation, association, image, notes, difficulty, and progress.
-- Dashboard with stats, quick actions, due words, and recent words.
-- Word add/edit/delete/detail flows.
-- Duplicate protection through `englishNormalized`.
-- Mock translation suggestions.
-- Mock image suggestions and manual image URL input.
-- Training sidebar with hint visibility settings.
-- Training modes:
-  - Hint Ladder
-  - Multiple Choice
-  - Manual Input
-  - Reverse Translation
-  - Image Association
-  - Progressive Hints
-- Levenshtein typo detection.
-- Review progress with level, streak, review count, last result, and next review date.
-- Dictionary search, filters, and sorting.
-- Local training settings saved in `localStorage`.
-
-## Screenshots
-
-Add screenshots here after running the app:
-
-```text
-docs/screenshots/dashboard.png
-docs/screenshots/training.png
-docs/screenshots/dictionary.png
-```
-
-## Setup
+## Getting Started
 
 ```bash
 npm install
 cp .env.example .env
-npx prisma generate
-npx prisma migrate dev --name init
+npm run db:generate
+npm run db:migrate
 npm run seed
 npm run dev
 ```
 
-On Windows PowerShell, if `cp` is not available:
+On Windows PowerShell:
 
 ```powershell
 Copy-Item .env.example .env
 ```
 
-Default `.env`:
-
-```env
-DATABASE_URL="file:./dev.db"
-```
-
-The app runs at:
+Open:
 
 ```text
 http://localhost:3000
 ```
 
-If port 3000 is busy, Next.js will use the next free port.
-
-## Quality Commands
-
-```bash
-npm run typecheck
-npm run lint
-npm run test
-npm run build
-```
-
-## Prisma
-
-Schema:
+Demo account after seeding:
 
 ```text
-prisma/schema.prisma
+demo@example.com
+demo-password
 ```
 
-Seed:
+## Environment Variables
+
+```env
+DATABASE_URL="file:./dev.db"
+APP_URL="https://uchi-slovo.ru"
+SESSION_TTL_DAYS="30"
+
+TELEGRAM_BOT_TOKEN=""
+TELEGRAM_BOT_USERNAME=""
+
+SMTP_HOST=""
+SMTP_PORT=""
+SMTP_USER=""
+SMTP_PASSWORD=""
+SMTP_FROM=""
+
+PASSWORD_RESET_TOKEN_TTL_MINUTES="30"
+```
+
+## Database
+
+The project uses Prisma with SQLite for local development. Local database files such as `prisma/dev.db` are ignored by Git.
+
+Useful commands:
 
 ```bash
+npm run db:generate
+npm run db:migrate
+npm run db:studio
 npm run seed
 ```
 
-Demo words:
+## Available Scripts
 
-- apple
-- book
-- river
-- cloud
-- fire
+```bash
+npm run dev
+npm run build
+npm run start
+npm run lint
+npm run typecheck
+npm test
+npm run test:watch
+npm run format
+npm run format:check
+npm run check:config
+npm run db:generate
+npm run db:migrate
+npm run db:studio
+npm run seed
+```
+
+`npm run check:config` prints which features are enabled by the current environment:
+
+- database connectivity and migration count;
+- Telegram login readiness;
+- SMTP/password reset mode;
+- CSV import/export readiness.
 
 ## Project Structure
 
 ```text
-app/
-  api/
-    suggest/images/route.ts
-    suggest/translation/route.ts
-    words/route.ts
-    words/[id]/route.ts
-    words/[id]/review/route.ts
-  settings/page.tsx
-  training/page.tsx
-  training/[id]/page.tsx
-  words/page.tsx
-  words/new/page.tsx
-  words/[id]/page.tsx
-  words/[id]/edit/page.tsx
-components/
-  HintLadderTraining.tsx
-  ManualInputQuiz.tsx
-  MultipleChoiceQuiz.tsx
-  TrainingWorkspace.tsx
-  WordForm.tsx
-  WordCard.tsx
-  WordListClient.tsx
-lib/
-  apiResponse.ts
-  mockSuggestions.ts
-  prisma.ts
-  schemas.ts
-  trainingSettings.ts
-  wordLogic.ts
-  wordSerializer.ts
-utils/
-  checkAnswer.ts
-  hintLadder.ts
-  reviewClient.ts
-  trainingQueue.ts
+app/                  Next.js pages and API routes
+components/           Reusable UI, auth, word, and training components
+lib/auth/             Password, session, Telegram, and reset-token helpers
+lib/validation/       Zod schemas
+lib/email/            Mailer abstraction
+lib/import-export/    CSV parsing and export formatting
+utils/                Training queue, answer checking, and hint helpers
+prisma/               Prisma schema, migrations, and seed script
+docs/screenshots/     Screenshots for README and portfolio review
 ```
 
-## Training Logic
+## Authentication
 
-Words are prioritized by:
+- Passwords are hashed with PBKDF2.
+- Session cookies are HTTP-only and use `sameSite=lax`.
+- Session tokens are stored in the database as SHA-256 hashes.
+- Telegram auth data is verified server-side with the bot token.
+- Password reset tokens are stored as hashes and expire.
+- Auth endpoints use in-memory rate limiting for the pet-project version.
 
-1. Not learned first.
-2. Due now or missing `nextReviewAt`.
-3. Lower `learningLevel`.
-4. Higher `wrongCount`.
-5. Older `lastReviewedAt`.
+Telegram setup:
 
-Shuffle, when enabled, only breaks ties inside the priority queue instead of destroying the learning priority.
+1. Create a bot with [BotFather](https://t.me/BotFather).
+2. Set the website domain with `/setdomain`: `uchi-slovo.ru`.
+3. Fill `TELEGRAM_BOT_TOKEN` and `TELEGRAM_BOT_USERNAME` in `.env`.
 
-Review results:
+For local Telegram testing, use an HTTPS tunnel and set `APP_URL` to that URL. For regular local development without Telegram, `APP_URL="http://localhost:3000"` is fine.
 
-- `correct`: increments correct count, review count, streak, level, and schedules a later review.
-- `typo`: increments typo count and review count, keeps level and streak.
-- `wrong`: increments wrong count and review count, resets streak, lowers level, and schedules a sooner review.
+Telegram reminders and bot commands are not implemented yet. They are listed in the roadmap, so no webhook URL, webhook secret, admin IDs, or channel IDs are required by the current code.
 
-Level intervals:
+## Security And Privacy
 
-- 0: today
-- 1: tomorrow
-- 2: in 2 days
-- 3: in 4 days
-- 4: in 7 days
-- 5: in 14 days
+- Secrets are read from env variables and are not committed.
+- `.env*`, local SQLite databases, logs, build output, and caches are ignored.
+- User-owned data is scoped by `userId`.
+- Account deletion removes the user and related data through Prisma cascade rules.
+- In production, replace in-memory rate limiting with Redis or Upstash.
 
-## What Works Now
+See [SECURITY.md](./SECURITY.md) for the repository security policy.
 
-- App starts locally.
-- Prisma migrations and seed work.
-- TypeScript, ESLint, tests, and production build pass.
-- CRUD dictionary works.
-- Duplicate words are rejected.
-- Training updates progress through API.
-- Hint Ladder requires manual input on the final stage.
-- Multiple Choice and Manual Input no longer allow easy progress through self-rating buttons.
+## Roadmap
 
-## Future Improvements
+See [ROADMAP.md](./ROADMAP.md).
 
-- Real translation API integration.
-- Real image search API integration.
-- User accounts and multiple dictionaries.
-- CSV import/export.
-- Scheduled review calendar.
-- More tests for API routes and React components.
+## Author
+
+Student pet project by the repository owner.

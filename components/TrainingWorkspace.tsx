@@ -10,7 +10,12 @@ import { HintLadderTraining } from "@/components/HintLadderTraining";
 import { ManualInputQuiz } from "@/components/ManualInputQuiz";
 import { MultipleChoiceQuiz } from "@/components/MultipleChoiceQuiz";
 import { TrainingSidebar } from "@/components/TrainingSidebar";
-import { defaultTrainingSettings, mergeTrainingSettings, trainingSettingsStorageKey, type TrainingSettings } from "@/lib/trainingSettings";
+import {
+  defaultTrainingSettings,
+  mergeTrainingSettings,
+  trainingSettingsStorageKey,
+  type TrainingSettings
+} from "@/lib/trainingSettings";
 import type { WordView } from "@/lib/wordSerializer";
 import { cn } from "@/utils/cn";
 import type { HintVisibility } from "@/utils/hintLadder";
@@ -100,7 +105,14 @@ export function TrainingWorkspace({ initialWords, startWordId }: TrainingWorkspa
   }
 
   if (words.length === 0) {
-    return <EmptyState title="Словарь пуст" description="Словарь пуст. Добавьте первое слово, чтобы начать тренировку." actionLabel="Добавить слово" actionHref="/words/new" />;
+    return (
+      <EmptyState
+        title="Словарь пуст"
+        description="Словарь пуст. Добавьте первое слово, чтобы начать тренировку."
+        actionLabel="Добавить слово"
+        actionHref="/words/new"
+      />
+    );
   }
 
   if (queue.length === 0) {
@@ -108,7 +120,9 @@ export function TrainingWorkspace({ initialWords, startWordId }: TrainingWorkspa
       <div className="panel flex min-h-80 flex-col items-center justify-center px-6 py-12 text-center">
         <p className="text-xs uppercase tracking-[0.16em] text-emerald-200/80">Training complete</p>
         <h2 className="mt-3 text-2xl font-semibold text-white">Все слова выучены</h2>
-        <p className="mt-2 max-w-xl text-sm leading-6 text-slate-400">Можно повторить выученные слова в свободном режиме или добавить новые слова в словарь.</p>
+        <p className="mt-2 max-w-xl text-sm leading-6 text-slate-400">
+          Можно повторить выученные слова в свободном режиме или добавить новые слова в словарь.
+        </p>
         <div className="mt-6 flex flex-wrap justify-center gap-3">
           <Button type="button" variant="primary" onClick={() => setIncludeLearned(true)}>
             Повторить выученные
@@ -163,8 +177,12 @@ export function TrainingWorkspace({ initialWords, startWordId }: TrainingWorkspa
                   className={cn(
                     "focus-ring inline-flex h-10 items-center gap-2 rounded-lg border px-3 text-sm font-medium transition",
                     active && "border-sky-300/60 bg-sky-400/15 text-sky-100",
-                    !active && item.primary && "border-emerald-300/25 bg-emerald-400/10 text-emerald-100 hover:bg-emerald-400/15",
-                    !active && !item.primary && "border-white/10 bg-white/[0.035] text-slate-400 hover:bg-white/[0.07] hover:text-white"
+                    !active &&
+                      item.primary &&
+                      "border-emerald-300/25 bg-emerald-400/10 text-emerald-100 hover:bg-emerald-400/15",
+                    !active &&
+                      !item.primary &&
+                      "border-white/10 bg-white/[0.035] text-slate-400 hover:bg-white/[0.07] hover:text-white"
                   )}
                   onClick={() => setMode(item.id)}
                 >
@@ -181,11 +199,25 @@ export function TrainingWorkspace({ initialWords, startWordId }: TrainingWorkspa
         ) : null}
 
         {mode === "multiple" ? (
-          <MultipleChoiceQuiz word={currentWord} words={queue} visibility={baseVisibility} answerField="english" onNext={nextWord} onReviewed={handleReviewed} />
+          <MultipleChoiceQuiz
+            word={currentWord}
+            words={queue}
+            visibility={baseVisibility}
+            answerField="english"
+            onNext={nextWord}
+            onReviewed={handleReviewed}
+          />
         ) : null}
 
         {mode === "manual" ? (
-          <ManualInputQuiz word={currentWord} visibility={baseVisibility} question="Введите английское слово" correctAnswer={currentWord.english} onNext={nextWord} onReviewed={handleReviewed} />
+          <ManualInputQuiz
+            word={currentWord}
+            visibility={baseVisibility}
+            question="Введите английское слово"
+            correctAnswer={currentWord.english}
+            onNext={nextWord}
+            onReviewed={handleReviewed}
+          />
         ) : null}
 
         {mode === "reverse" ? (
@@ -214,7 +246,13 @@ export function TrainingWorkspace({ initialWords, startWordId }: TrainingWorkspa
         ) : null}
 
         {mode === "progressive" ? (
-          <HintLadderTraining word={currentWord} settings={{ ...settings, ladder: { ...settings.ladder, totalSteps: 5 } }} title="Короткий главный" onNext={nextWord} onReviewed={handleReviewed} />
+          <HintLadderTraining
+            word={currentWord}
+            settings={{ ...settings, ladder: { ...settings.ladder, totalSteps: 5 } }}
+            title="Короткий главный"
+            onNext={nextWord}
+            onReviewed={handleReviewed}
+          />
         ) : null}
       </div>
     </div>

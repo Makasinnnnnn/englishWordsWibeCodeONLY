@@ -1,6 +1,9 @@
 import type { Word } from "@prisma/client";
 
-export type WordView = Omit<Word, "userId" | "englishNormalized" | "createdAt" | "updatedAt" | "lastReviewedAt" | "nextReviewAt"> & {
+export type WordView = Omit<
+  Word,
+  "userId" | "englishNormalized" | "createdAt" | "updatedAt" | "lastReviewedAt" | "nextReviewAt"
+> & {
   createdAt: string;
   updatedAt: string;
   lastReviewedAt: string | null;

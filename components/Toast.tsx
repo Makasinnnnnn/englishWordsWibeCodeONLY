@@ -59,10 +59,18 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           const Icon = icons[toast.tone];
 
           return (
-            <div key={toast.id} className={cn("flex items-start gap-3 rounded-lg border px-4 py-3 shadow-glow", tones[toast.tone])}>
+            <div
+              key={toast.id}
+              className={cn("flex items-start gap-3 rounded-lg border px-4 py-3 shadow-glow", tones[toast.tone])}
+            >
               <Icon className="mt-0.5 h-4 w-4 shrink-0" />
               <p className="flex-1 text-sm">{toast.message}</p>
-              <button type="button" className="rounded p-1 hover:bg-white/10" onClick={() => removeToast(toast.id)} aria-label="Закрыть уведомление">
+              <button
+                type="button"
+                className="rounded p-1 hover:bg-white/10"
+                onClick={() => removeToast(toast.id)}
+                aria-label="Закрыть уведомление"
+              >
                 <X className="h-4 w-4" />
               </button>
             </div>

@@ -33,9 +33,12 @@ export default async function DashboardPage() {
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_24rem] lg:items-center">
           <div>
             <p className="text-xs uppercase tracking-[0.18em] text-sky-200/80">Word Memory Trainer</p>
-            <h2 className="mt-3 max-w-3xl text-3xl font-semibold text-white md:text-5xl">Личный тренажер английских слов с ассоциациями и лестницей подсказок</h2>
+            <h2 className="mt-3 max-w-3xl text-3xl font-semibold text-white md:text-5xl">
+              Личный тренажер английских слов с ассоциациями и лестницей подсказок
+            </h2>
             <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-400">
-              Добавляйте слова, перевод, личные ассоциации и изображения, а затем тренируйтесь в режимах теста, ручного ввода и главной лестницы подсказок.
+              Добавляйте слова, перевод, личные ассоциации и изображения, а затем тренируйтесь в режимах теста, ручного
+              ввода и главной лестницы подсказок.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link href="/words/new">
@@ -53,7 +56,9 @@ export default async function DashboardPage() {
           <div className="rounded-lg border border-white/10 bg-graphite-900 p-5">
             <p className="text-sm font-medium text-slate-200">Сегодняшний фокус</p>
             <p className="mt-3 text-4xl font-semibold text-white">Главный режим</p>
-            <p className="mt-3 text-sm leading-6 text-slate-500">Подсказки исчезают по этапам, а финальная проверка закрепляет слово через ручной ввод.</p>
+            <p className="mt-3 text-sm leading-6 text-slate-500">
+              Подсказки исчезают по этапам, а финальная проверка закрепляет слово через ручной ввод.
+            </p>
           </div>
         </div>
       </section>
@@ -65,7 +70,9 @@ export default async function DashboardPage() {
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Сегодня повторить</p>
-              <h2 className="mt-1 text-xl font-semibold text-white">{dueWords.length > 0 ? `${dueWords.length} слова ждут тренировки` : "Очередь чистая"}</h2>
+              <h2 className="mt-1 text-xl font-semibold text-white">
+                {dueWords.length > 0 ? `${dueWords.length} слова ждут тренировки` : "Очередь чистая"}
+              </h2>
             </div>
             <Link href="/training">
               <Button variant="primary" icon={<Dumbbell className="h-4 w-4" />}>
@@ -76,14 +83,22 @@ export default async function DashboardPage() {
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             {dueWords.length > 0 ? (
               dueWords.map((word) => (
-                <Link key={word.id} href={`/training/${word.id}`} className="rounded-lg border border-white/10 bg-white/[0.035] p-4 transition hover:border-sky-300/40 hover:bg-white/[0.06]">
+                <Link
+                  key={word.id}
+                  href={`/training/${word.id}`}
+                  className="rounded-lg border border-white/10 bg-white/[0.035] p-4 transition hover:border-sky-300/40 hover:bg-white/[0.06]"
+                >
                   <p className="text-lg font-semibold text-white">{word.english}</p>
                   <p className="mt-1 text-sm text-slate-400">{word.translation}</p>
-                  <p className="mt-3 text-xs text-slate-500">Уровень {word.learningLevel} · ошибок {word.wrongCount}</p>
+                  <p className="mt-3 text-xs text-slate-500">
+                    Уровень {word.learningLevel} · ошибок {word.wrongCount}
+                  </p>
                 </Link>
               ))
             ) : (
-              <p className="rounded-lg border border-white/10 bg-white/[0.035] p-4 text-sm text-slate-400 sm:col-span-2">Добавьте новые слова или повторите выученные в свободном режиме.</p>
+              <p className="rounded-lg border border-white/10 bg-white/[0.035] p-4 text-sm text-slate-400 sm:col-span-2">
+                Добавьте новые слова или повторите выученные в свободном режиме.
+              </p>
             )}
           </div>
         </div>
@@ -125,7 +140,12 @@ export default async function DashboardPage() {
           </div>
         </section>
       ) : (
-        <EmptyState title="Словарь пуст" description="Добавьте первое слово, чтобы увидеть статистику и начать тренировку." actionLabel="Добавить слово" actionHref="/words/new" />
+        <EmptyState
+          title="Словарь пуст"
+          description="Добавьте первое слово, чтобы увидеть статистику и начать тренировку."
+          actionLabel="Добавить слово"
+          actionHref="/words/new"
+        />
       )}
     </div>
   );

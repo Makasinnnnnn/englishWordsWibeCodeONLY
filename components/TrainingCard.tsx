@@ -87,7 +87,12 @@ export function TrainingCard({ word, visibility, title = "Карточка сл�
             word.imageUrl && !imageBroken ? (
               <div className="overflow-hidden rounded-lg border border-white/10">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={word.imageUrl} alt={word.english} className="aspect-[16/12] w-full object-cover" onError={() => setImageBroken(true)} />
+                <img
+                  src={word.imageUrl}
+                  alt={word.english}
+                  className="aspect-[16/12] w-full object-cover"
+                  onError={() => setImageBroken(true)}
+                />
               </div>
             ) : (
               <div className="flex aspect-[16/12] items-center justify-center rounded-lg border border-dashed border-white/10 bg-white/[0.04] text-sm text-slate-500">

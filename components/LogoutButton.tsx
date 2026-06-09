@@ -21,5 +21,16 @@ export function LogoutButton() {
     }
   }
 
-  return <Button type="button" variant="ghost" size="sm" icon={<LogOut className="h-4 w-4" />} onClick={() => void logout()} disabled={submitting}>Выйти</Button>;
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="sm"
+      icon={<LogOut className="h-4 w-4" />}
+      onClick={() => void logout()}
+      disabled={submitting}
+    >
+      Выйти
+    </Button>
+  );
 }

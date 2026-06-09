@@ -35,7 +35,13 @@ const resultIcons = {
   wrong: XCircle
 };
 
-export function HintLadderTraining({ word, settings, title = "Лестница подсказок", onNext, onReviewed }: HintLadderTrainingProps) {
+export function HintLadderTraining({
+  word,
+  settings,
+  title = "Лестница подсказок",
+  onNext,
+  onReviewed
+}: HintLadderTrainingProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [userAnswer, setUserAnswer] = useState("");
   const [result, setResult] = useState<CheckAnswerResult | null>(null);
@@ -143,7 +149,9 @@ export function HintLadderTraining({ word, settings, title = "Лестница �
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.16em] text-sky-200/80">{title}</p>
-            <h2 className="mt-1 text-2xl font-semibold text-white">Этап {currentStep} из {totalSteps}</h2>
+            <h2 className="mt-1 text-2xl font-semibold text-white">
+              Этап {currentStep} из {totalSteps}
+            </h2>
           </div>
           <div className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-slate-300">
             уровень слова: {word.learningLevel}/5
@@ -155,7 +163,11 @@ export function HintLadderTraining({ word, settings, title = "Лестница �
         </div>
       </section>
 
-      <TrainingCard word={word} visibility={visibility} title={visibility.requireManualInput ? "Контрольное вспоминание" : "Связка подсказок"} />
+      <TrainingCard
+        word={word}
+        visibility={visibility}
+        title={visibility.requireManualInput ? "Контрольное вспоминание" : "Связка подсказок"}
+      />
 
       <section className="panel p-5">
         {completed ? (
@@ -165,7 +177,8 @@ export function HintLadderTraining({ word, settings, title = "Лестница �
               Лестница пройдена
             </div>
             <p className="mt-2 text-sm leading-6 text-emerald-100/80">
-              Слово засчитано как успешное повторение. Новый уровень: {completedWord?.learningLevel ?? word.learningLevel}/5.
+              Слово засчитано как успешное повторение. Новый уровень:{" "}
+              {completedWord?.learningLevel ?? word.learningLevel}/5.
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
               <Button type="button" variant="primary" onClick={onNext}>
@@ -184,9 +197,20 @@ export function HintLadderTraining({ word, settings, title = "Лестница �
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">
               <div className="flex-1">
-                <Input value={userAnswer} onChange={(event) => setUserAnswer(event.target.value)} placeholder="Введите слово и нажмите Enter" autoComplete="off" disabled={busy} />
+                <Input
+                  value={userAnswer}
+                  onChange={(event) => setUserAnswer(event.target.value)}
+                  placeholder="Введите слово и нажмите Enter"
+                  autoComplete="off"
+                  disabled={busy}
+                />
               </div>
-              <Button type="submit" variant="primary" icon={<Keyboard className="h-4 w-4" />} disabled={busy || !userAnswer.trim()}>
+              <Button
+                type="submit"
+                variant="primary"
+                icon={<Keyboard className="h-4 w-4" />}
+                disabled={busy || !userAnswer.trim()}
+              >
                 Проверить
               </Button>
             </div>
@@ -203,14 +227,25 @@ export function HintLadderTraining({ word, settings, title = "Лестница �
           </div>
         )}
 
-        {showAnswer ? <div className="mt-4 rounded-lg border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-slate-300">Правильный ответ: {word.english}</div> : null}
+        {showAnswer ? (
+          <div className="mt-4 rounded-lg border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-slate-300">
+            Правильный ответ: {word.english}
+          </div>
+        ) : null}
 
         {result && ResultIcon ? (
-          <div className={cn("mt-4 flex items-start gap-2 rounded-lg border px-4 py-3 text-sm", resultStyles[result.status])}>
+          <div
+            className={cn(
+              "mt-4 flex items-start gap-2 rounded-lg border px-4 py-3 text-sm",
+              resultStyles[result.status]
+            )}
+          >
             <ResultIcon className="mt-0.5 h-4 w-4 shrink-0" />
             <div>
               <p>{result.status === "typo" ? "Почти правильно, проверь написание" : result.message}</p>
-              {result.status === "wrong" && settings.ladder.stepBackOnWrong ? <p className="mt-1 text-xs opacity-80">Можно вернуться на предыдущий этап и собрать связку заново.</p> : null}
+              {result.status === "wrong" && settings.ladder.stepBackOnWrong ? (
+                <p className="mt-1 text-xs opacity-80">Можно вернуться на предыдущий этап и собрать связку заново.</p>
+              ) : null}
             </div>
           </div>
         ) : null}
@@ -219,7 +254,13 @@ export function HintLadderTraining({ word, settings, title = "Лестница �
           <Button type="button" variant="ghost" icon={<Eye className="h-4 w-4" />} onClick={() => setShowAnswer(true)}>
             Показать ответ
           </Button>
-          <Button type="button" variant="secondary" icon={<ArrowLeft className="h-4 w-4" />} onClick={goPreviousStep} disabled={currentStep === 1}>
+          <Button
+            type="button"
+            variant="secondary"
+            icon={<ArrowLeft className="h-4 w-4" />}
+            onClick={goPreviousStep}
+            disabled={currentStep === 1}
+          >
             Вернуться на шаг назад
           </Button>
           <Button type="button" variant="secondary" icon={<RotateCcw className="h-4 w-4" />} onClick={restart}>

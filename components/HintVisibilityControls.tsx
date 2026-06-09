@@ -8,7 +8,15 @@ type HintVisibilityControlsProps = {
   onChange: (settings: TrainingSettings) => void;
 };
 
-function Checkbox({ label, checked, onChange }: { label: string; checked: boolean; onChange: (checked: boolean) => void }) {
+function Checkbox({
+  label,
+  checked,
+  onChange
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}) {
   return (
     <label className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 text-sm text-slate-300 transition hover:bg-white/[0.04]">
       <input
@@ -40,7 +48,11 @@ export function HintVisibilityControls({ settings, onChange }: HintVisibilityCon
         <p className="mt-1 text-xs leading-5 text-slate-500">Настройки финальных этапов и реакции на ошибки.</p>
       </div>
 
-      <Checkbox label="Включить автоматическую лестницу" checked={settings.ladder.auto} onChange={(checked) => updateLadder({ auto: checked })} />
+      <Checkbox
+        label="Включить автоматическую лестницу"
+        checked={settings.ladder.auto}
+        onChange={(checked) => updateLadder({ auto: checked })}
+      />
 
       <div className="space-y-2">
         <p className="text-xs text-slate-500">Количество этапов</p>
@@ -51,7 +63,9 @@ export function HintVisibilityControls({ settings, onChange }: HintVisibilityCon
               type="button"
               className={cn(
                 "focus-ring h-9 rounded-lg border text-sm transition",
-                settings.ladder.totalSteps === stepCount ? "border-sky-300/60 bg-sky-400/15 text-sky-100" : "border-white/10 bg-graphite-900 text-slate-400 hover:bg-white/[0.06]"
+                settings.ladder.totalSteps === stepCount
+                  ? "border-sky-300/60 bg-sky-400/15 text-sky-100"
+                  : "border-white/10 bg-graphite-900 text-slate-400 hover:bg-white/[0.06]"
               )}
               onClick={() => updateLadder({ totalSteps: stepCount as 4 | 5 | 6 })}
             >
@@ -61,10 +75,26 @@ export function HintVisibilityControls({ settings, onChange }: HintVisibilityCon
         </div>
       </div>
 
-      <Checkbox label="На финальном этапе показывать первую букву" checked={settings.ladder.finalFirstLetter} onChange={(checked) => updateLadder({ finalFirstLetter: checked })} />
-      <Checkbox label="На финальном этапе показывать длину слова" checked={settings.ladder.finalWordLength} onChange={(checked) => updateLadder({ finalWordLength: checked })} />
-      <Checkbox label="При ошибке возвращать на предыдущий этап" checked={settings.ladder.stepBackOnWrong} onChange={(checked) => updateLadder({ stepBackOnWrong: checked })} />
-      <Checkbox label="При опечатке требовать повторный ввод" checked={settings.ladder.retryTypo} onChange={(checked) => updateLadder({ retryTypo: checked })} />
+      <Checkbox
+        label="На финальном этапе показывать первую букву"
+        checked={settings.ladder.finalFirstLetter}
+        onChange={(checked) => updateLadder({ finalFirstLetter: checked })}
+      />
+      <Checkbox
+        label="На финальном этапе показывать длину слова"
+        checked={settings.ladder.finalWordLength}
+        onChange={(checked) => updateLadder({ finalWordLength: checked })}
+      />
+      <Checkbox
+        label="При ошибке возвращать на предыдущий этап"
+        checked={settings.ladder.stepBackOnWrong}
+        onChange={(checked) => updateLadder({ stepBackOnWrong: checked })}
+      />
+      <Checkbox
+        label="При опечатке требовать повторный ввод"
+        checked={settings.ladder.retryTypo}
+        onChange={(checked) => updateLadder({ retryTypo: checked })}
+      />
     </section>
   );
 }

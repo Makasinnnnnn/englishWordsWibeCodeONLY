@@ -1,11 +1,9 @@
-import { NextResponse } from "next/server";
-
-import { clearSession } from "@/lib/auth";
+import { authOk, destroySession } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 export async function POST() {
-  await clearSession();
+  await destroySession();
 
-  return NextResponse.json({ ok: true });
+  return authOk({ loggedOut: true });
 }

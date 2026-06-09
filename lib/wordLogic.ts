@@ -14,7 +14,10 @@ export function getNextReviewAt(level: number, result: AnswerStatus, from = new 
   return nextReviewAt;
 }
 
-export function getReviewUpdateState(current: { learningLevel: number; streak: number; isLearned: boolean }, result: AnswerStatus) {
+export function getReviewUpdateState(
+  current: { learningLevel: number; streak: number; isLearned: boolean },
+  result: AnswerStatus
+) {
   const learningLevel =
     result === "correct"
       ? Math.min(5, current.learningLevel + 1)
@@ -23,7 +26,8 @@ export function getReviewUpdateState(current: { learningLevel: number; streak: n
         : current.learningLevel;
 
   const streak = result === "correct" ? current.streak + 1 : result === "wrong" ? 0 : current.streak;
-  const isLearned = result === "wrong" ? false : result === "correct" ? learningLevel >= 5 && streak >= 3 : current.isLearned;
+  const isLearned =
+    result === "wrong" ? false : result === "correct" ? learningLevel >= 5 && streak >= 3 : current.isLearned;
 
   return {
     learningLevel,

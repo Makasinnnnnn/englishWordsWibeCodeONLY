@@ -11,15 +11,20 @@ import type { AuthUser } from "@/lib/auth";
 const titles: Array<[string, string]> = [
   ["/login", "Вход"],
   ["/register", "Создание аккаунта"],
+  ["/forgot-password", "Восстановление пароля"],
+  ["/reset-password", "Новый пароль"],
   ["/words/new", "Добавление слова"],
   ["/words", "Словарь"],
   ["/training", "Тренировка"],
-  ["/settings", "Настройки"],
+  ["/settings/account", "Аккаунт"],
+  ["/settings", "Настройки тренировок"],
   ["/", "Панель обучения"]
 ];
 
 function getTitle(pathname: string) {
-  return titles.find(([path]) => (path === "/" ? pathname === "/" : pathname.startsWith(path)))?.[1] ?? "Word Memory Trainer";
+  return (
+    titles.find(([path]) => (path === "/" ? pathname === "/" : pathname.startsWith(path)))?.[1] ?? "Word Memory Trainer"
+  );
 }
 
 export function Header({ user }: { user: AuthUser | null }) {

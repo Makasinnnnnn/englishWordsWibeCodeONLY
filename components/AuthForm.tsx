@@ -1,105 +1,81 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import Link from "next/link";
-import { Copy, Eye, EyeOff, KeyRound, LogIn, RefreshCw, ShieldCheck, UserPlus } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Eye, EyeOff, LogIn, ShieldCheck, UserPlus } from "lucide-react";
+import { ZodError } from "zod";
 
+import { TelegramLoginButton } from "@/components/auth/TelegramLoginButton";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
 import { useToast } from "@/components/Toast";
-import { authSchema } from "@/lib/authSchemas";
+import { loginSchema, registerSchema } from "@/lib/validation/auth-schemas";
 
 type AuthFormProps = {
   mode: "login" | "register";
+  telegramBotUsername?: string;
 };
 
-type GeneratedCredentials = {
-  login: string;
-  password: string;
-};
-
-const alphabet = "abcdefghjkmnpqrstuvwxyz23456789";
-
-function randomString(length: number) {
-  const values = new Uint32Array(length);
-  window.crypto.getRandomValues(values);
-
-  return Array.from(values, (value) => alphabet[value % alphabet.length]).join("");
-}
-
-function generateCredentials(): GeneratedCredentials {
-  return {
-    login: `user-${randomString(8)}`,
-    password: `${randomString(5)}-${randomString(5)}-${randomString(5)}`
+type AuthResponse = {
+  ok: boolean;
+  error?: {
+    message: string;
   };
-}
+};
 
-export function AuthForm({ mode }: AuthFormProps) {
+export function AuthForm({ mode, telegramBotUsername }: AuthFormProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { showToast } = useToast();
   const [email, setEmail] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
-  const [generatedCredentials, setGeneratedCredentials] = useState<GeneratedCredentials | null>(null);
   const isRegister = mode === "register";
-  const passwordLengthError = password.length > 0 && password.length < 8 ? `Пароль меньше 8 символов. Нужно еще ${8 - password.length}.` : undefined;
-  const passwordHint = useMemo(() => {
-    if (passwordLengthError) {
-      return undefined;
-    }
 
-    return isRegister ? "Минимум 8 символов. Для случайного аккаунта лучше сразу сохранить пароль." : undefined;
-  }, [isRegister, passwordLengthError]);
-
-  function fillRandomCredentials() {
-    const nextCredentials = generateCredentials();
-    setEmail(nextCredentials.login);
-    setPassword(nextCredentials.password);
-    setShowPassword(true);
-    setErrors({});
-    setGeneratedCredentials(nextCredentials);
-  }
-
-  async function copyGeneratedCredentials() {
-    if (!generatedCredentials) {
-      return;
-    }
-
-    await navigator.clipboard.writeText(`Логин: ${generatedCredentials.login}\nПароль: ${generatedCredentials.password}`);
-    showToast("Логин и пароль скопированы", "success");
+  function afterAuth() {
+    const next = searchParams.get("next");
+    router.push(next && next.startsWith("/") ? next : "/");
+    router.refresh();
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setErrors({});
 
-    const parsed = authSchema.safeParse({ email, password });
-    if (!parsed.success) {
-      const fieldErrors = parsed.error.flatten().fieldErrors;
-      setErrors(Object.fromEntries(Object.entries(fieldErrors).map(([key, value]) => [key, value?.[0] ?? "Invalid value"])));
-      return;
-    }
-
-    setSubmitting(true);
     try {
+      const payload = isRegister
+        ? registerSchema.parse({ email, displayName, password, confirmPassword })
+        : loginSchema.parse({ email, password });
+
+      setSubmitting(true);
       const response = await fetch(`/api/auth/${mode}`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(parsed.data)
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(payload)
       });
-      const data = (await response.json()) as { error?: string; code?: string };
+      const data = (await response.json()) as AuthResponse;
 
-      if (!response.ok) {
-        throw new Error(data.error || "Auth failed");
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error?.message ?? "Auth failed");
       }
 
       showToast(isRegister ? "Аккаунт создан" : "Вход выполнен", "success");
-      window.location.assign("/");
+      afterAuth();
     } catch (error) {
-      showToast(error instanceof Error ? error.message : "Не удалось войти", "error");
+      if (error instanceof ZodError) {
+        const fieldErrors = error.flatten().fieldErrors;
+        setErrors(
+          Object.fromEntries(Object.entries(fieldErrors).map(([key, value]) => [key, value?.[0] ?? "Invalid value"]))
+        );
+        return;
+      }
+
+      showToast(error instanceof Error ? error.message : "Не удалось выполнить вход", "error");
     } finally {
       setSubmitting(false);
     }
@@ -112,55 +88,52 @@ export function AuthForm({ mode }: AuthFormProps) {
           {isRegister ? <UserPlus className="h-5 w-5" /> : <LogIn className="h-5 w-5" />}
         </div>
         <p className="mt-4 text-xs uppercase tracking-[0.18em] text-sky-200/80">Word Memory Trainer</p>
-        <h2 className="mt-2 text-2xl font-semibold text-white">{isRegister ? "Создать приватный аккаунт" : "Войти в словарь"}</h2>
+        <h2 className="mt-2 text-2xl font-semibold text-white">{isRegister ? "Создать аккаунт" : "Войти в словарь"}</h2>
         <p className="mt-2 text-sm leading-6 text-slate-400">
-          {isRegister ? "Слова, ассоциации, картинки и прогресс будут привязаны только к этому аккаунту." : "Введи email или случайный логин, который был создан при регистрации."}
+          {isRegister
+            ? "Email, пароль и прогресс будут храниться в вашем личном аккаунте."
+            : "Введите email и пароль или продолжите через Telegram."}
         </p>
       </div>
 
-      {isRegister ? (
-        <div className="rounded-lg border border-amber-300/20 bg-amber-300/10 p-4">
-          <div className="flex items-start gap-3">
-            <KeyRound className="mt-0.5 h-5 w-5 shrink-0 text-amber-100" />
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-amber-50">Одноразовый логин без почты</p>
-              <p className="mt-1 text-xs leading-5 text-amber-100/75">Можно создать случайный логин и пароль. Если потеряешь пароль, восстановить такой аккаунт не получится.</p>
-              <Button type="button" variant="warning" size="sm" className="mt-3" icon={<RefreshCw className="h-4 w-4" />} onClick={fillRandomCredentials}>
-                Сгенерировать логин и пароль
-              </Button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      <TelegramLoginButton
+        botUsername={telegramBotUsername}
+        endpoint="/api/auth/telegram"
+        label={isRegister ? "Register with Telegram" : "Continue with Telegram"}
+        onSuccess={afterAuth}
+      />
 
-      {generatedCredentials ? (
-        <div className="rounded-lg border border-emerald-300/20 bg-emerald-400/10 p-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-emerald-50">Сохрани эти данные сейчас</p>
-              <p className="mt-2 break-all text-sm text-slate-200">Логин: {generatedCredentials.login}</p>
-              <p className="mt-1 break-all text-sm text-slate-200">Пароль: {generatedCredentials.password}</p>
-            </div>
-            <Button type="button" variant="success" size="icon" aria-label="Скопировать логин и пароль" icon={<Copy className="h-4 w-4" />} onClick={() => void copyGeneratedCredentials()} />
-          </div>
-        </div>
-      ) : null}
+      <div className="flex items-center gap-3 text-xs uppercase tracking-[0.16em] text-slate-600">
+        <span className="h-px flex-1 bg-white/10" />
+        Email
+        <span className="h-px flex-1 bg-white/10" />
+      </div>
 
       <Input
-        label="Email или логин"
+        label="Email"
         name="email"
-        type="text"
-        autoComplete="username"
+        type="email"
+        autoComplete="email"
         value={email}
-        onChange={(event) => {
-          setEmail(event.target.value);
-          setGeneratedCredentials(null);
-        }}
-        placeholder={isRegister ? "you@example.com или user-name" : "email или логин"}
+        onChange={(event) => setEmail(event.target.value)}
+        placeholder="you@example.com"
         error={errors.email}
-        hint={isRegister ? "Настоящий email пригодится, если позже добавим восстановление пароля." : undefined}
         required
       />
+
+      {isRegister ? (
+        <Input
+          label="Имя на экране"
+          name="displayName"
+          type="text"
+          autoComplete="name"
+          value={displayName}
+          onChange={(event) => setDisplayName(event.target.value)}
+          placeholder="Например, Максим"
+          error={errors.displayName}
+          hint="Необязательно. Можно оставить пустым."
+        />
+      ) : null}
 
       <Input
         label="Пароль"
@@ -168,12 +141,9 @@ export function AuthForm({ mode }: AuthFormProps) {
         type={showPassword ? "text" : "password"}
         autoComplete={isRegister ? "new-password" : "current-password"}
         value={password}
-        onChange={(event) => {
-          setPassword(event.target.value);
-          setGeneratedCredentials(null);
-        }}
-        error={errors.password || passwordLengthError}
-        hint={passwordHint}
+        onChange={(event) => setPassword(event.target.value)}
+        error={errors.password}
+        hint={isRegister ? "Минимум 8 символов, буквы и цифры." : undefined}
         rightElement={
           <button
             type="button"
@@ -187,8 +157,35 @@ export function AuthForm({ mode }: AuthFormProps) {
         required
       />
 
-      <Button type="submit" variant="primary" className="w-full justify-center" icon={isRegister ? <ShieldCheck className="h-4 w-4" /> : <LogIn className="h-4 w-4" />} disabled={submitting}>
-        {submitting ? "Проверяю..." : isRegister ? "Создать аккаунт" : "Войти"}
+      {isRegister ? (
+        <Input
+          label="Повторите пароль"
+          name="confirmPassword"
+          type={showPassword ? "text" : "password"}
+          autoComplete="new-password"
+          value={confirmPassword}
+          onChange={(event) => setConfirmPassword(event.target.value)}
+          error={errors.confirmPassword}
+          required
+        />
+      ) : null}
+
+      {!isRegister ? (
+        <div className="text-right">
+          <Link href="/forgot-password" className="text-sm text-sky-200 hover:text-sky-100">
+            Забыли пароль?
+          </Link>
+        </div>
+      ) : null}
+
+      <Button
+        type="submit"
+        variant="primary"
+        className="w-full justify-center"
+        icon={isRegister ? <ShieldCheck className="h-4 w-4" /> : <LogIn className="h-4 w-4" />}
+        disabled={submitting}
+      >
+        {submitting ? "Проверяем..." : isRegister ? "Создать аккаунт" : "Войти"}
       </Button>
 
       <p className="text-center text-sm text-slate-400">

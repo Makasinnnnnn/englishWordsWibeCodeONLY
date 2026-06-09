@@ -8,47 +8,55 @@ function dueRank(word: WordView, now = Date.now()) {
   return new Date(word.nextReviewAt).getTime() <= now ? 0 : 1;
 }
 
-export function sortWordsForTraining(words: WordView[], options: { shuffleWithinPriority?: boolean; now?: number } = {}) {
+export function sortWordsForTraining(
+  words: WordView[],
+  options: { shuffleWithinPriority?: boolean; now?: number } = {}
+) {
   const now = options.now ?? Date.now();
   const withRandomTieBreaker = words.map((word) => ({
     word,
     random: options.shuffleWithinPriority ? Math.random() : 0
   }));
 
-  return withRandomTieBreaker.sort((aItem, bItem) => {
-    const a = aItem.word;
-    const b = bItem.word;
+  return withRandomTieBreaker
+    .sort((aItem, bItem) => {
+      const a = aItem.word;
+      const b = bItem.word;
 
-    if (a.isLearned !== b.isLearned) {
-      return Number(a.isLearned) - Number(b.isLearned);
-    }
+      if (a.isLearned !== b.isLearned) {
+        return Number(a.isLearned) - Number(b.isLearned);
+      }
 
-    const aDue = dueRank(a, now);
-    const bDue = dueRank(b, now);
-    if (aDue !== bDue) {
-      return aDue - bDue;
-    }
+      const aDue = dueRank(a, now);
+      const bDue = dueRank(b, now);
+      if (aDue !== bDue) {
+        return aDue - bDue;
+      }
 
-    if (a.learningLevel !== b.learningLevel) {
-      return a.learningLevel - b.learningLevel;
-    }
+      if (a.learningLevel !== b.learningLevel) {
+        return a.learningLevel - b.learningLevel;
+      }
 
-    if (a.wrongCount !== b.wrongCount) {
-      return b.wrongCount - a.wrongCount;
-    }
+      if (a.wrongCount !== b.wrongCount) {
+        return b.wrongCount - a.wrongCount;
+      }
 
-    const aReviewed = a.lastReviewedAt ? new Date(a.lastReviewedAt).getTime() : 0;
-    const bReviewed = b.lastReviewedAt ? new Date(b.lastReviewedAt).getTime() : 0;
+      const aReviewed = a.lastReviewedAt ? new Date(a.lastReviewedAt).getTime() : 0;
+      const bReviewed = b.lastReviewedAt ? new Date(b.lastReviewedAt).getTime() : 0;
 
-    if (aReviewed !== bReviewed) {
-      return aReviewed - bReviewed;
-    }
+      if (aReviewed !== bReviewed) {
+        return aReviewed - bReviewed;
+      }
 
-    return aItem.random - bItem.random;
-  }).map((item) => item.word);
+      return aItem.random - bItem.random;
+    })
+    .map((item) => item.word);
 }
 
-export function getTrainingQueue(words: WordView[], options: { includeLearned?: boolean; shuffleWithinPriority?: boolean; now?: number } = {}) {
+export function getTrainingQueue(
+  words: WordView[],
+  options: { includeLearned?: boolean; shuffleWithinPriority?: boolean; now?: number } = {}
+) {
   const candidates = options.includeLearned ? words : words.filter((word) => !word.isLearned);
   return sortWordsForTraining(candidates, options);
 }
@@ -78,7 +86,11 @@ export function legacySortWordsForTraining(words: WordView[]) {
   });
 }
 
-export function buildMultipleChoiceOptions(correct: string, allOptions: string[], fallbackOptions = ["memory", "lesson", "picture", "answer", "practice", "example"]) {
+export function buildMultipleChoiceOptions(
+  correct: string,
+  allOptions: string[],
+  fallbackOptions = ["memory", "lesson", "picture", "answer", "practice", "example"]
+) {
   const normalizedCorrect = correct.trim().toLowerCase();
   const seen = new Set<string>([normalizedCorrect]);
   const distractors: string[] = [];

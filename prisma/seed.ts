@@ -1,9 +1,18 @@
+import { pbkdf2Sync, randomBytes } from "crypto";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
 function normalizeEnglishWord(word: string) {
   return word.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function hashPassword(password: string) {
+  const iterations = 120_000;
+  const salt = randomBytes(16).toString("hex");
+  const hash = pbkdf2Sync(password, salt, iterations, 32, "sha256").toString("hex");
+
+  return `pbkdf2:${iterations}:${salt}:${hash}`;
 }
 
 const demoWords = [
@@ -50,12 +59,17 @@ const demoWords = [
 ];
 
 async function main() {
+  const demoPasswordHash = hashPassword("demo-password");
   const demoUser = await prisma.user.upsert({
     where: { email: "demo@example.com" },
-    update: {},
+    update: {
+      passwordHash: demoPasswordHash,
+      displayName: "Demo Student"
+    },
     create: {
       email: "demo@example.com",
-      passwordHash: "seeded-demo-user"
+      displayName: "Demo Student",
+      passwordHash: demoPasswordHash
     }
   });
 

@@ -1,42 +1,52 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { ZodError } from "zod";
 
-import { apiError, isPrismaUniqueViolation, validationError } from "@/lib/apiResponse";
-import { createSession, hashPassword, normalizeAuthEmail } from "@/lib/auth";
-import { authSchema } from "@/lib/authSchemas";
+import { authError, authOk, authValidationError, createSession, hashPassword, normalizeAuthEmail } from "@/lib/auth";
+import { isPrismaUniqueViolation } from "@/lib/apiResponse";
 import { prisma } from "@/lib/prisma";
+import { checkRateLimit, getClientIp, makeRateLimitKey } from "@/lib/rate-limit";
+import { registerSchema } from "@/lib/validation/auth-schemas";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
   try {
-    const payload = authSchema.parse(await request.json());
+    const ip = getClientIp(request.headers);
+    const body = await request.json();
+    const payload = registerSchema.parse(body);
+    const email = normalizeAuthEmail(payload.email);
+    const rateLimit = checkRateLimit(makeRateLimitKey("register", ip, email), 5, 60 * 60 * 1000);
+
+    if (!rateLimit.allowed) {
+      return authError("RATE_LIMITED", "Слишком много регистраций. Попробуйте позже.", 429);
+    }
+
     const user = await prisma.user.create({
       data: {
-        email: normalizeAuthEmail(payload.email),
-        passwordHash: hashPassword(payload.password)
+        email,
+        displayName: payload.displayName?.trim() || null,
+        passwordHash: await hashPassword(payload.password),
+        emailVerifiedAt: null
       },
       select: {
         id: true,
-        email: true
+        email: true,
+        displayName: true
       }
     });
 
     await createSession(user.id);
 
-    return NextResponse.json({ user }, { status: 201 });
+    return authOk({ user }, 201);
   } catch (error) {
     if (error instanceof ZodError) {
-      return validationError(error);
+      return authValidationError(error);
     }
 
     if (isPrismaUniqueViolation(error)) {
-      return apiError("Такой пользователь уже существует", {
-        status: 409,
-        code: "USER_ALREADY_EXISTS"
-      });
+      return authError("CONFLICT", "Аккаунт с таким email уже существует", 409);
     }
 
-    return apiError("Не удалось создать аккаунт");
+    return authError("INTERNAL_ERROR", "Не удалось создать аккаунт", 500);
   }
 }

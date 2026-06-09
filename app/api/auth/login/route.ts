@@ -1,40 +1,50 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { ZodError } from "zod";
 
-import { apiError, validationError } from "@/lib/apiResponse";
-import { createSession, normalizeAuthEmail, verifyPassword } from "@/lib/auth";
-import { authSchema } from "@/lib/authSchemas";
+import { authError, authOk, authValidationError, createSession, normalizeAuthEmail, verifyPassword } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { checkRateLimit, getClientIp, makeRateLimitKey } from "@/lib/rate-limit";
+import { loginSchema } from "@/lib/validation/auth-schemas";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
   try {
-    const payload = authSchema.parse(await request.json());
+    const ip = getClientIp(request.headers);
+    const body = await request.json();
+    const payload = loginSchema.parse(body);
+    const rateLimit = checkRateLimit(
+      makeRateLimitKey("login", ip, normalizeAuthEmail(payload.email)),
+      8,
+      15 * 60 * 1000
+    );
+
+    if (!rateLimit.allowed) {
+      return authError("RATE_LIMITED", "Слишком много попыток входа. Попробуйте позже.", 429);
+    }
+
     const user = await prisma.user.findUnique({
       where: { email: normalizeAuthEmail(payload.email) }
     });
 
-    if (!user || !verifyPassword(payload.password, user.passwordHash)) {
-      return apiError("Неверный логин или пароль", {
-        status: 401,
-        code: "INVALID_CREDENTIALS"
-      });
+    if (!user || !(await verifyPassword(payload.password, user.passwordHash))) {
+      return authError("UNAUTHORIZED", "Неверный email или пароль", 401);
     }
 
     await createSession(user.id);
 
-    return NextResponse.json({
+    return authOk({
       user: {
         id: user.id,
-        email: user.email
+        email: user.email,
+        displayName: user.displayName
       }
     });
   } catch (error) {
     if (error instanceof ZodError) {
-      return validationError(error);
+      return authValidationError(error);
     }
 
-    return apiError("Не удалось войти");
+    return authError("INTERNAL_ERROR", "Не удалось войти", 500);
   }
 }

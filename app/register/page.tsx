@@ -12,5 +12,5 @@ export default async function RegisterPage() {
     redirect("/");
   }
 
-  return <AuthForm mode="register" />;
+  return <AuthForm mode="register" telegramBotUsername={process.env.TELEGRAM_BOT_USERNAME} />;
 }

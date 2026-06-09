@@ -86,7 +86,12 @@ export function WordListClient({ words }: WordListClientProps) {
         <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_14rem]">
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-slate-500" />
-            <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Поиск по слову, переводу или ассоциации" className="pl-9" />
+            <Input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Поиск по слову, переводу или ассоциации"
+              className="pl-9"
+            />
           </div>
           <Select value={sort} onChange={(event) => setSort(event.target.value as Sort)}>
             <option value="level">По уровню</option>
@@ -103,7 +108,9 @@ export function WordListClient({ words }: WordListClientProps) {
               type="button"
               className={cn(
                 "focus-ring h-9 rounded-lg border px-3 text-sm transition",
-                filter === item.id ? "border-sky-300/60 bg-sky-400/15 text-sky-100" : "border-white/10 bg-white/[0.035] text-slate-400 hover:bg-white/[0.07] hover:text-white"
+                filter === item.id
+                  ? "border-sky-300/60 bg-sky-400/15 text-sky-100"
+                  : "border-white/10 bg-white/[0.035] text-slate-400 hover:bg-white/[0.07] hover:text-white"
               )}
               onClick={() => setFilter(item.id)}
             >

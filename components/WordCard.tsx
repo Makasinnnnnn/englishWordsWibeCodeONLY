@@ -83,28 +83,46 @@ export function WordCard({ word, detail = false, afterDeleteHref = "/words" }: W
   }
 
   return (
-    <article className={cn("panel overflow-hidden", detail ? "grid gap-0 lg:grid-cols-[minmax(0,1.1fr)_minmax(20rem,0.9fr)]" : "")}>
+    <article
+      className={cn(
+        "panel overflow-hidden",
+        detail ? "grid gap-0 lg:grid-cols-[minmax(0,1.1fr)_minmax(20rem,0.9fr)]" : ""
+      )}
+    >
       <div className={cn("space-y-5 p-5", detail && "md:p-6")}>
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className={cn("truncate font-semibold text-white", detail ? "text-4xl" : "text-2xl")}>{word.english}</h2>
+              <h2 className={cn("truncate font-semibold text-white", detail ? "text-4xl" : "text-2xl")}>
+                {word.english}
+              </h2>
               {word.isLearned ? (
-                <span className="rounded-full border border-emerald-300/20 bg-emerald-400/10 px-2.5 py-1 text-xs text-emerald-200">выучено</span>
+                <span className="rounded-full border border-emerald-300/20 bg-emerald-400/10 px-2.5 py-1 text-xs text-emerald-200">
+                  выучено
+                </span>
               ) : (
-                <span className="rounded-full border border-sky-300/20 bg-sky-400/10 px-2.5 py-1 text-xs text-sky-200">уровень {word.learningLevel}</span>
+                <span className="rounded-full border border-sky-300/20 bg-sky-400/10 px-2.5 py-1 text-xs text-sky-200">
+                  уровень {word.learningLevel}
+                </span>
               )}
             </div>
             <p className="mt-2 text-lg text-slate-300">{word.translation}</p>
           </div>
-          <span className="rounded-lg border border-white/10 bg-white/[0.05] px-2.5 py-1 text-xs uppercase text-slate-400">{word.difficulty}</span>
+          <span className="rounded-lg border border-white/10 bg-white/[0.05] px-2.5 py-1 text-xs uppercase text-slate-400">
+            {word.difficulty}
+          </span>
         </div>
 
         {!detail ? (
           word.imageUrl && !imageBroken ? (
             <div className="overflow-hidden rounded-lg border border-white/10">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={word.imageUrl} alt={word.english} className="aspect-[16/7] w-full object-cover" onError={() => setImageBroken(true)} />
+              <img
+                src={word.imageUrl}
+                alt={word.english}
+                className="aspect-[16/7] w-full object-cover"
+                onError={() => setImageBroken(true)}
+              />
             </div>
           ) : (
             <div className="flex aspect-[16/7] items-center justify-center rounded-lg border border-dashed border-white/10 bg-white/[0.04] text-sm text-slate-500">
@@ -114,7 +132,12 @@ export function WordCard({ word, detail = false, afterDeleteHref = "/words" }: W
           )
         ) : null}
 
-        <ProgressBar value={word.learningLevel} max={5} label="Прогресс изучения" tone={word.isLearned ? "emerald" : "sky"} />
+        <ProgressBar
+          value={word.learningLevel}
+          max={5}
+          label="Прогресс изучения"
+          tone={word.isLearned ? "emerald" : "sky"}
+        />
 
         <dl className="grid gap-3 text-sm sm:grid-cols-2">
           <div className="muted-panel p-3">
@@ -165,20 +188,39 @@ export function WordCard({ word, detail = false, afterDeleteHref = "/words" }: W
               Редактировать
             </Button>
           </Link>
-          <Button type="button" variant={word.isLearned ? "warning" : "success"} icon={<CheckCircle2 className="h-4 w-4" />} onClick={() => void toggleLearned()} disabled={busy}>
+          <Button
+            type="button"
+            variant={word.isLearned ? "warning" : "success"}
+            icon={<CheckCircle2 className="h-4 w-4" />}
+            onClick={() => void toggleLearned()}
+            disabled={busy}
+          >
             {word.isLearned ? "Вернуть в обучение" : "Выучено"}
           </Button>
-          <Button type="button" variant="danger" icon={<Trash2 className="h-4 w-4" />} onClick={() => void deleteWord()} disabled={busy}>
+          <Button
+            type="button"
+            variant="danger"
+            icon={<Trash2 className="h-4 w-4" />}
+            onClick={() => void deleteWord()}
+            disabled={busy}
+          >
             Удалить
           </Button>
         </div>
       </div>
 
-      <div className={cn("border-t border-white/10 bg-white/[0.025] p-5 lg:border-l lg:border-t-0", !detail && "hidden")}>
+      <div
+        className={cn("border-t border-white/10 bg-white/[0.025] p-5 lg:border-l lg:border-t-0", !detail && "hidden")}
+      >
         {word.imageUrl && !imageBroken ? (
           <div className="overflow-hidden rounded-lg border border-white/10">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={word.imageUrl} alt={word.english} className="aspect-[16/12] w-full object-cover" onError={() => setImageBroken(true)} />
+            <img
+              src={word.imageUrl}
+              alt={word.english}
+              className="aspect-[16/12] w-full object-cover"
+              onError={() => setImageBroken(true)}
+            />
           </div>
         ) : (
           <div className="flex aspect-[16/12] items-center justify-center rounded-lg border border-dashed border-white/10 bg-white/[0.04] text-slate-500">

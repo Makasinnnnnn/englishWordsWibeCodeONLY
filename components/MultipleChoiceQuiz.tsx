@@ -22,7 +22,16 @@ type MultipleChoiceQuizProps = {
   onReviewed?: (word: WordView) => void;
 };
 
-export function MultipleChoiceQuiz({ word, words, visibility, answerField = "english", fallbackOptions, title = "Тест", onNext, onReviewed }: MultipleChoiceQuizProps) {
+export function MultipleChoiceQuiz({
+  word,
+  words,
+  visibility,
+  answerField = "english",
+  fallbackOptions,
+  title = "Тест",
+  onNext,
+  onReviewed
+}: MultipleChoiceQuizProps) {
   const [selected, setSelected] = useState<string | null>(null);
   const [status, setStatus] = useState<"correct" | "wrong" | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
@@ -30,7 +39,12 @@ export function MultipleChoiceQuiz({ word, words, visibility, answerField = "eng
 
   const correctAnswer = answerField === "english" ? word.english : word.translation;
   const options = useMemo(
-    () => buildMultipleChoiceOptions(correctAnswer, words.map((item) => (answerField === "english" ? item.english : item.translation)), fallbackOptions),
+    () =>
+      buildMultipleChoiceOptions(
+        correctAnswer,
+        words.map((item) => (answerField === "english" ? item.english : item.translation)),
+        fallbackOptions
+      ),
     [answerField, correctAnswer, fallbackOptions, words]
   );
 
@@ -81,7 +95,9 @@ export function MultipleChoiceQuiz({ word, words, visibility, answerField = "eng
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Вопрос</p>
-            <h3 className="mt-1 text-xl font-semibold text-white">{answerField === "english" ? "Выберите английское слово" : "Выберите перевод"}</h3>
+            <h3 className="mt-1 text-xl font-semibold text-white">
+              {answerField === "english" ? "Выберите английское слово" : "Выберите перевод"}
+            </h3>
           </div>
           <Button type="button" variant="ghost" icon={<Eye className="h-4 w-4" />} onClick={() => setShowAnswer(true)}>
             Показать ответ
@@ -118,7 +134,9 @@ export function MultipleChoiceQuiz({ word, words, visibility, answerField = "eng
           <div
             className={cn(
               "mt-4 flex items-center gap-2 rounded-lg border px-4 py-3 text-sm",
-              status === "correct" ? "border-emerald-300/20 bg-emerald-500/15 text-emerald-100" : "border-red-300/20 bg-red-500/15 text-red-100"
+              status === "correct"
+                ? "border-emerald-300/20 bg-emerald-500/15 text-emerald-100"
+                : "border-red-300/20 bg-red-500/15 text-red-100"
             )}
           >
             {status === "correct" ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}

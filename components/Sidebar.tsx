@@ -2,17 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, BookOpen, Dumbbell, PlusCircle, Settings, Sparkles } from "lucide-react";
+import { BarChart3, BookOpen, Dumbbell, PlusCircle, Settings, Sparkles, UserCircle } from "lucide-react";
 
-import { cn } from "@/utils/cn";
 import type { AuthUser } from "@/lib/auth";
+import { cn } from "@/utils/cn";
 
 const navigation = [
   { href: "/", label: "Главная", icon: BarChart3 },
   { href: "/words", label: "Словарь", icon: BookOpen },
   { href: "/words/new", label: "Добавить", icon: PlusCircle },
   { href: "/training", label: "Тренировка", icon: Dumbbell },
-  { href: "/settings", label: "Настройки", icon: Settings }
+  { href: "/settings", label: "Тренировки", icon: Settings },
+  { href: "/settings/account", label: "Аккаунт", icon: UserCircle }
 ];
 
 export function Sidebar({ user }: { user: AuthUser | null }) {
@@ -37,7 +38,8 @@ export function Sidebar({ user }: { user: AuthUser | null }) {
       <nav className="space-y-1">
         {navigation.map((item) => {
           const Icon = item.icon;
-          const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+          const isActive =
+            item.href === "/" || item.href === "/settings" ? pathname === item.href : pathname.startsWith(item.href);
 
           return (
             <Link
@@ -57,7 +59,9 @@ export function Sidebar({ user }: { user: AuthUser | null }) {
 
       <div className="absolute bottom-5 left-4 right-4 rounded-lg border border-white/10 bg-white/[0.035] p-4">
         <p className="text-sm font-medium text-slate-200">Лестница подсказок</p>
-        <p className="mt-2 text-xs leading-5 text-slate-500">Главный режим тренировки: подсказки исчезают постепенно, пока слово не всплывает само.</p>
+        <p className="mt-2 text-xs leading-5 text-slate-500">
+          Главный режим тренировки: подсказки исчезают постепенно, пока слово не всплывает само.
+        </p>
       </div>
     </aside>
   );
