@@ -15,7 +15,7 @@ The app is designed as a free tool for classmates who want to prepare for Englis
 ## Features
 
 - Email/password registration and login.
-- Telegram login/register through the Telegram Login Widget.
+- Telegram login/register through the Telegram Login Widget or Telegram bot deep link.
 - Telegram linking/unlinking from account settings.
 - Password reset by email, with a console mailer fallback in development.
 - Personal dictionary with English word, translation, association, image URL, notes, difficulty, and review state.
@@ -89,6 +89,7 @@ SESSION_TTL_DAYS="30"
 
 TELEGRAM_BOT_TOKEN=""
 TELEGRAM_BOT_USERNAME=""
+TELEGRAM_WEBHOOK_SECRET=""
 
 SMTP_HOST=""
 SMTP_PORT=""
@@ -134,7 +135,7 @@ npm run seed
 `npm run check:config` prints which features are enabled by the current environment:
 
 - database connectivity and migration count;
-- Telegram login readiness;
+- Telegram login and webhook readiness;
 - SMTP/password reset mode;
 - CSV import/export readiness.
 
@@ -157,7 +158,8 @@ docs/screenshots/     Screenshots for README and portfolio review
 - Passwords are hashed with PBKDF2.
 - Session cookies are HTTP-only and use `sameSite=lax`.
 - Session tokens are stored in the database as SHA-256 hashes.
-- Telegram auth data is verified server-side with the bot token.
+- Telegram Login Widget auth data is verified server-side with the bot token.
+- Telegram bot login uses one-time hashed login tokens and a webhook secret.
 - Password reset tokens are stored as hashes and expire.
 - Auth endpoints use in-memory rate limiting for the pet-project version.
 
@@ -165,11 +167,28 @@ Telegram setup:
 
 1. Create a bot with [BotFather](https://t.me/BotFather).
 2. Set the website domain with `/setdomain`: `uchi-slovo.ru`.
-3. Fill `TELEGRAM_BOT_TOKEN` and `TELEGRAM_BOT_USERNAME` in `.env`.
+3. Fill `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, and `TELEGRAM_WEBHOOK_SECRET` in `.env`.
+4. Register the webhook after deployment:
+
+```bash
+set -a
+source .env
+set +a
+
+curl -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook" \
+  -d "url=$APP_URL/api/auth/telegram/webhook" \
+  -d "secret_token=$TELEGRAM_WEBHOOK_SECRET"
+```
+
+Check it:
+
+```bash
+curl "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/getWebhookInfo"
+```
 
 For local Telegram testing, use an HTTPS tunnel and set `APP_URL` to that URL. For regular local development without Telegram, `APP_URL="http://localhost:3000"` is fine.
 
-Telegram reminders and bot commands are not implemented yet. They are listed in the roadmap, so no webhook URL, webhook secret, admin IDs, or channel IDs are required by the current code.
+Telegram learning reminders and rich bot commands are not implemented yet. They are listed in the roadmap.
 
 ## Security And Privacy
 

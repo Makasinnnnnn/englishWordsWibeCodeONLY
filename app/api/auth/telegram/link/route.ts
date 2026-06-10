@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { ZodError } from "zod";
 
 import { authError, authOk, authValidationError, getCurrentUser } from "@/lib/auth";
+import { linkTelegramProfileToUser } from "@/lib/auth/telegram-account";
 import { verifyTelegramAuth } from "@/lib/auth/telegram";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit, getClientIp, makeRateLimitKey } from "@/lib/rate-limit";
@@ -28,42 +29,21 @@ export async function POST(request: NextRequest) {
       return authError("TELEGRAM_AUTH_FAILED", "Не удалось подтвердить Telegram", 401);
     }
 
-    const existingByTelegramId = await prisma.telegramAccount.findUnique({
-      where: { telegramId: payload.id }
-    });
+    const result = await linkTelegramProfileToUser(user.id, payload);
 
-    if (existingByTelegramId && existingByTelegramId.userId !== user.id) {
+    if (!result.ok && result.code === "TELEGRAM_TAKEN") {
       return authError("CONFLICT", "Этот Telegram уже привязан к другому аккаунту", 409);
     }
 
-    const existingForUser = await prisma.telegramAccount.findUnique({
-      where: { userId: user.id }
-    });
-
-    if (existingForUser && existingForUser.telegramId !== payload.id) {
+    if (!result.ok && result.code === "USER_HAS_TELEGRAM") {
       return authError("CONFLICT", "Сначала отвяжите текущий Telegram-аккаунт", 409);
     }
 
-    const telegram = await prisma.telegramAccount.upsert({
-      where: { userId: user.id },
-      update: {
-        telegramId: payload.id,
-        username: payload.username ?? null,
-        firstName: payload.first_name ?? null,
-        lastName: payload.last_name ?? null,
-        photoUrl: payload.photo_url ?? null
-      },
-      create: {
-        userId: user.id,
-        telegramId: payload.id,
-        username: payload.username ?? null,
-        firstName: payload.first_name ?? null,
-        lastName: payload.last_name ?? null,
-        photoUrl: payload.photo_url ?? null
-      }
-    });
+    if (!result.ok) {
+      return authError("CONFLICT", "Не удалось привязать этот Telegram-аккаунт", 409);
+    }
 
-    return authOk({ telegram });
+    return authOk({ telegram: result.telegram });
   } catch (error) {
     if (error instanceof ZodError) {
       return authValidationError(error);

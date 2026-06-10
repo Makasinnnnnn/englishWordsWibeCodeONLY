@@ -91,6 +91,20 @@ export const telegramAuthSchema = z.object({
 });
 
 export const linkTelegramSchema = telegramAuthSchema;
+
+export const telegramBotStartSchema = z.object({
+  mode: z.enum(["auth", "link"]).default("auth")
+});
+
+export const telegramBotTokenSchema = z.object({
+  token: z
+    .string()
+    .trim()
+    .min(20, "Некорректная ссылка Telegram")
+    .max(96, "Некорректная ссылка Telegram")
+    .regex(/^[A-Za-z0-9_-]+$/, "Некорректная ссылка Telegram")
+});
+
 export const authSchema = loginSchema;
 
 export type LoginInput = z.infer<typeof loginSchema>;
@@ -99,3 +113,5 @@ export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 export type SetPasswordInput = z.infer<typeof setPasswordSchema>;
 export type TelegramAuthInput = z.infer<typeof telegramAuthSchema>;
+export type TelegramBotStartInput = z.infer<typeof telegramBotStartSchema>;
+export type TelegramBotTokenInput = z.infer<typeof telegramBotTokenSchema>;

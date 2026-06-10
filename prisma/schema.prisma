@@ -79,6 +79,27 @@ model TelegramAccount {
   @@index([telegramId])
 }
 
+model TelegramLoginToken {
+  id         String    @id @default(cuid())
+  tokenHash  String    @unique
+  purpose    String    @default("auth")
+  userId     String?
+  telegramId String?
+  username   String?
+  firstName  String?
+  lastName   String?
+  photoUrl   String?
+  expiresAt  DateTime
+  usedAt     DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([expiresAt])
+  @@index([purpose])
+  @@index([userId])
+  @@index([telegramId])
+}
+
 model PasswordResetToken {
   id        String    @id @default(cuid())
   userId    String

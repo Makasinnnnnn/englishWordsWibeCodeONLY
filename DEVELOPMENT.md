@@ -55,6 +55,26 @@ Auth endpoints use a small in-memory rate limiter. It is good enough for local/d
 
 Telegram Login Widget data is verified in `lib/auth/telegram.ts` using the official data-check-string and HMAC-SHA256 flow. Configure the bot through BotFather `/setdomain`.
 
+Telegram bot login uses:
+
+- `POST /api/auth/telegram/bot/start` to create a short-lived one-time token;
+- `POST /api/auth/telegram/webhook` to receive `/start auth_<token>` from Telegram;
+- `GET /api/auth/telegram/bot/status` to complete login or account linking in the browser.
+
+The raw bot login token is only sent to the browser and Telegram deep link. The database stores its SHA-256 hash.
+
+For deployed environments, set `TELEGRAM_WEBHOOK_SECRET` and register the webhook:
+
+```bash
+set -a
+source .env
+set +a
+
+curl -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook" \
+  -d "url=$APP_URL/api/auth/telegram/webhook" \
+  -d "secret_token=$TELEGRAM_WEBHOOK_SECRET"
+```
+
 Password reset uses hashed reset tokens. Without SMTP config, `lib/email/mailer.ts` prints the reset URL to the server console.
 
 `npm run check:config` checks whether Telegram, SMTP, Prisma migrations, and the database connection are ready.
@@ -98,6 +118,7 @@ prisma/               Schema, migrations, seed
 - API keys
 - SMTP credentials
 - Telegram bot tokens
+- Telegram webhook secrets
 
 ## Quality Gates
 
@@ -115,6 +136,7 @@ npm run build
 - Session tokens are stored as SHA-256 hashes.
 - Cookies are HTTP-only, sameSite=lax, and secure in production.
 - Telegram auth data is verified server-side with `TELEGRAM_BOT_TOKEN`.
+- Telegram bot webhook requests use `TELEGRAM_WEBHOOK_SECRET` in deployed environments.
 - Password reset tokens are stored as hashes and expire.
 - Auth endpoints are rate-limited.
 - Private data queries include `userId`.

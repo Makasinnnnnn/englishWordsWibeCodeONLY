@@ -8,10 +8,14 @@ export {
   resetPasswordSchema,
   setPasswordSchema,
   telegramAuthSchema,
+  telegramBotStartSchema,
+  telegramBotTokenSchema,
   type ForgotPasswordInput,
   type LoginInput,
   type RegisterInput,
   type ResetPasswordInput,
   type SetPasswordInput,
-  type TelegramAuthInput
+  type TelegramAuthInput,
+  type TelegramBotStartInput,
+  type TelegramBotTokenInput
 } from "@/lib/validation/auth-schemas";

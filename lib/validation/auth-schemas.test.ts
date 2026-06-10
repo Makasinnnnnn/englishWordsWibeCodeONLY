@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { loginSchema, registerSchema, resetPasswordSchema } from "./auth-schemas";
+import {
+  loginSchema,
+  registerSchema,
+  resetPasswordSchema,
+  telegramBotStartSchema,
+  telegramBotTokenSchema
+} from "./auth-schemas";
 
 describe("auth validation schemas", () => {
   it("accepts a valid email login", () => {
@@ -35,5 +41,20 @@ describe("auth validation schemas", () => {
         confirmPassword: "StrongPass124"
       }).success
     ).toBe(false);
+  });
+
+  it("defaults bot start mode to auth", () => {
+    expect(telegramBotStartSchema.parse({})).toEqual({ mode: "auth" });
+  });
+
+  it("accepts a safe Telegram bot token value", () => {
+    const token = "abcDEF123_-abcDEF123_-abcDEF123_-";
+
+    expect(telegramBotTokenSchema.parse({ token })).toEqual({ token });
+  });
+
+  it("rejects malformed Telegram bot token values", () => {
+    expect(telegramBotTokenSchema.safeParse({ token: "../secret" }).success).toBe(false);
+    expect(telegramBotTokenSchema.safeParse({ token: "short" }).success).toBe(false);
   });
 });

@@ -108,6 +108,11 @@ async function main() {
       detail: features.telegramLogin ? "enabled" : "disabled until Telegram env is set"
     },
     {
+      label: "Telegram bot webhook secret",
+      status: env.TELEGRAM_WEBHOOK_SECRET ? "ok" : "warn",
+      detail: env.TELEGRAM_WEBHOOK_SECRET ? "configured" : "not configured"
+    },
+    {
       label: "Password reset email",
       status: features.passwordResetEmail === "smtp" ? "ok" : "warn",
       detail: features.passwordResetEmail === "smtp" ? "SMTP enabled" : "dev console fallback"

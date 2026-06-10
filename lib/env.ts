@@ -25,6 +25,7 @@ const envSchema = z.object({
   PASSWORD_RESET_TOKEN_TTL_MINUTES: optionalPositiveInteger.default(30),
   TELEGRAM_BOT_TOKEN: optionalNonEmptyString,
   TELEGRAM_BOT_USERNAME: optionalNonEmptyString,
+  TELEGRAM_WEBHOOK_SECRET: optionalNonEmptyString,
   SMTP_HOST: optionalNonEmptyString,
   SMTP_PORT: optionalPositiveInteger,
   SMTP_USER: optionalNonEmptyString,
@@ -57,6 +58,7 @@ export function getEnvWarnings(env: AppEnv, options: { production?: boolean } = 
   const warnings: string[] = [];
   const errors: string[] = [];
   const telegramPartiallyConfigured = Boolean(env.TELEGRAM_BOT_TOKEN) !== Boolean(env.TELEGRAM_BOT_USERNAME);
+  const telegramConfigured = Boolean(env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_BOT_USERNAME);
   const smtpFields = [env.SMTP_HOST, env.SMTP_PORT, env.SMTP_FROM];
   const smtpConfigured = smtpFields.every(Boolean);
   const smtpPartiallyConfigured = smtpFields.some(Boolean) && !smtpConfigured;
@@ -65,8 +67,12 @@ export function getEnvWarnings(env: AppEnv, options: { production?: boolean } = 
     warnings.push("Telegram login needs both TELEGRAM_BOT_TOKEN and TELEGRAM_BOT_USERNAME.");
   }
 
-  if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_BOT_USERNAME) {
+  if (!telegramConfigured) {
     warnings.push("Telegram login/register/linking will be disabled.");
+  }
+
+  if (telegramConfigured && !env.TELEGRAM_WEBHOOK_SECRET) {
+    warnings.push("Telegram bot webhook works best with TELEGRAM_WEBHOOK_SECRET configured.");
   }
 
   if (smtpPartiallyConfigured) {
@@ -82,8 +88,12 @@ export function getEnvWarnings(env: AppEnv, options: { production?: boolean } = 
       errors.push("Production APP_URL should be the public HTTPS URL.");
     }
 
-    if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_BOT_USERNAME) {
+    if (!telegramConfigured) {
       errors.push("Production Telegram login requires TELEGRAM_BOT_TOKEN and TELEGRAM_BOT_USERNAME.");
+    }
+
+    if (telegramConfigured && !env.TELEGRAM_WEBHOOK_SECRET) {
+      errors.push("Production Telegram bot login requires TELEGRAM_WEBHOOK_SECRET.");
     }
 
     if (!smtpConfigured) {
