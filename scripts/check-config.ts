@@ -98,6 +98,11 @@ async function main() {
       detail: env.APP_URL
     },
     {
+      label: "NEXT_PUBLIC_APP_URL",
+      status: env.NEXT_PUBLIC_APP_URL ? "ok" : "warn",
+      detail: env.NEXT_PUBLIC_APP_URL ?? "not configured"
+    },
+    {
       label: "Email/password auth",
       status: features.emailPasswordAuth ? "ok" : "error",
       detail: features.emailPasswordAuth ? "enabled" : "disabled"
@@ -116,6 +121,11 @@ async function main() {
       label: "Password reset email",
       status: features.passwordResetEmail === "smtp" ? "ok" : "warn",
       detail: features.passwordResetEmail === "smtp" ? "SMTP enabled" : "dev console fallback"
+    },
+    {
+      label: "Email confirmation",
+      status: features.emailVerificationEmail === "smtp" ? "ok" : "warn",
+      detail: features.emailVerificationEmail === "smtp" ? "SMTP enabled" : "dev console fallback"
     },
     {
       label: "CSV import/export",

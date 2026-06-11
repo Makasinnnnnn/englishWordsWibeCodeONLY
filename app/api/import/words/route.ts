@@ -8,6 +8,8 @@ import { normalizeEnglishWord } from "@/lib/wordLogic";
 
 export const dynamic = "force-dynamic";
 
+const maxCsvSizeBytes = 500_000;
+
 export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser();
@@ -17,6 +19,11 @@ export async function POST(request: NextRequest) {
     }
 
     const csv = await request.text();
+
+    if (new TextEncoder().encode(csv).length > maxCsvSizeBytes) {
+      return apiError("CSV file is too large", { status: 413, code: "FILE_TOO_LARGE" });
+    }
+
     const parsed = parseWordsCsv(csv);
 
     if (parsed.errors.length > 0 && parsed.words.length === 0) {

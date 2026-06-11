@@ -4,6 +4,10 @@
 
 :root {
   color-scheme: dark;
+  --page-bg: #090b10;
+  --page-bg-soft: #10141b;
+  --text-main: #eef2ff;
+  --selection-bg: rgba(96, 165, 250, 0.35);
 }
 
 * {
@@ -12,7 +16,7 @@
 
 html {
   min-height: 100%;
-  background: #090b10;
+  background: var(--page-bg);
 }
 
 body {
@@ -20,8 +24,22 @@ body {
   margin: 0;
   background:
     radial-gradient(circle at top left, rgba(37, 99, 235, 0.14), transparent 34rem),
-    linear-gradient(135deg, #090b10 0%, #10141b 45%, #0b1116 100%);
-  color: #eef2ff;
+    linear-gradient(135deg, var(--page-bg) 0%, var(--page-bg-soft) 45%, #0b1116 100%);
+  color: var(--text-main);
+}
+
+html[data-theme="light"] {
+  color-scheme: light;
+  --page-bg: #f8fafc;
+  --page-bg-soft: #edf4fb;
+  --text-main: #0f172a;
+  --selection-bg: rgba(14, 165, 233, 0.22);
+}
+
+html[data-theme="light"] body {
+  background:
+    radial-gradient(circle at top left, rgba(14, 165, 233, 0.13), transparent 32rem),
+    linear-gradient(135deg, #f8fafc 0%, #eef6ff 48%, #f6fbff 100%);
 }
 
 a {
@@ -30,7 +48,7 @@ a {
 }
 
 ::selection {
-  background: rgba(96, 165, 250, 0.35);
+  background: var(--selection-bg);
 }
 
 .scrollbar-thin {
@@ -49,5 +67,62 @@ a {
 
   .focus-ring {
     @apply focus:outline-none focus:ring-2 focus:ring-sky-400/70 focus:ring-offset-2 focus:ring-offset-graphite-950;
+  }
+}
+
+@layer components {
+  html[data-theme="light"] .panel {
+    border-color: rgb(15 23 42 / 0.12);
+    background: rgb(255 255 255 / 0.86);
+    box-shadow:
+      0 0 0 1px rgb(14 165 233 / 0.08),
+      0 24px 70px rgb(15 23 42 / 0.11);
+  }
+
+  html[data-theme="light"] .muted-panel {
+    border-color: rgb(15 23 42 / 0.1);
+    background: rgb(248 250 252 / 0.9);
+  }
+
+  html[data-theme="light"] .focus-ring {
+    @apply focus:ring-offset-slate-50;
+  }
+
+  html[data-theme="light"] .text-white {
+    color: #0f172a !important;
+  }
+
+  html[data-theme="light"] .text-slate-100,
+  html[data-theme="light"] .text-slate-200,
+  html[data-theme="light"] .text-slate-300 {
+    color: #1e293b !important;
+  }
+
+  html[data-theme="light"] .text-slate-400 {
+    color: #475569 !important;
+  }
+
+  html[data-theme="light"] .text-slate-500 {
+    color: #64748b !important;
+  }
+
+  html[data-theme="light"] .border-white\/10 {
+    border-color: rgb(15 23 42 / 0.12) !important;
+  }
+
+  html[data-theme="light"] .bg-white\/\[0\.035\],
+  html[data-theme="light"] .bg-white\/\[0\.05\],
+  html[data-theme="light"] .bg-white\/\[0\.06\] {
+    background-color: rgb(255 255 255 / 0.72) !important;
+  }
+
+  html[data-theme="light"] .bg-graphite-950\/75,
+  html[data-theme="light"] .bg-graphite-950\/85 {
+    background-color: rgb(255 255 255 / 0.86) !important;
+  }
+
+  html[data-theme="light"] .bg-graphite-900,
+  html[data-theme="light"] .bg-graphite-850\/90 {
+    background-color: rgb(255 255 255 / 0.88) !important;
   }
 }

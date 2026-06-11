@@ -5,11 +5,14 @@ const sessionCookieName = "word_trainer_session";
 const privatePrefixes = [
   "/words",
   "/training",
+  "/analytics",
   "/settings",
   "/api/words",
   "/api/import",
   "/api/export",
-  "/api/account"
+  "/api/account",
+  "/api/analytics",
+  "/api/suggest"
 ];
 
 export function middleware(request: NextRequest) {

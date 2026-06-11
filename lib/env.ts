@@ -21,8 +21,11 @@ const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   DATABASE_URL: z.string().trim().min(1, "DATABASE_URL is required"),
   APP_URL: z.string().trim().url("APP_URL must be a valid URL").default("http://localhost:3000"),
+  NEXT_PUBLIC_APP_URL: z.string().trim().url("NEXT_PUBLIC_APP_URL must be a valid URL").optional(),
+  SESSION_SECRET: optionalNonEmptyString,
   SESSION_TTL_DAYS: optionalPositiveInteger.default(30),
   PASSWORD_RESET_TOKEN_TTL_MINUTES: optionalPositiveInteger.default(30),
+  EMAIL_VERIFICATION_TOKEN_TTL_MINUTES: optionalPositiveInteger.default(1440),
   TELEGRAM_BOT_TOKEN: optionalNonEmptyString,
   TELEGRAM_BOT_USERNAME: optionalNonEmptyString,
   TELEGRAM_WEBHOOK_SECRET: optionalNonEmptyString,
@@ -38,6 +41,7 @@ export type AppEnv = z.infer<typeof envSchema>;
 export type FeatureStatus = {
   emailPasswordAuth: boolean;
   passwordResetEmail: "smtp" | "dev-console";
+  emailVerificationEmail: "smtp" | "dev-console";
   telegramLogin: boolean;
   csvImportExport: boolean;
   learningDashboard: boolean;
@@ -80,12 +84,22 @@ export function getEnvWarnings(env: AppEnv, options: { production?: boolean } = 
   }
 
   if (!smtpConfigured) {
-    warnings.push("SMTP is not configured. Password reset links will be printed to the server console in dev mode.");
+    warnings.push(
+      "SMTP is not configured. Password reset and email verification links will be printed to the server console in dev mode."
+    );
   }
 
   if (options.production) {
     if (env.APP_URL.includes("localhost") || env.APP_URL.startsWith("http://")) {
       errors.push("Production APP_URL should be the public HTTPS URL.");
+    }
+
+    if (!env.NEXT_PUBLIC_APP_URL || env.NEXT_PUBLIC_APP_URL !== env.APP_URL) {
+      warnings.push("NEXT_PUBLIC_APP_URL should match APP_URL in production.");
+    }
+
+    if (!env.SESSION_SECRET) {
+      warnings.push("SESSION_SECRET is documented for deployments. Set a long random value in production secrets.");
     }
 
     if (!telegramConfigured) {
@@ -97,7 +111,7 @@ export function getEnvWarnings(env: AppEnv, options: { production?: boolean } = 
     }
 
     if (!smtpConfigured) {
-      errors.push("Production password reset requires SMTP_HOST, SMTP_PORT and SMTP_FROM.");
+      errors.push("Production password reset and email verification require SMTP_HOST, SMTP_PORT and SMTP_FROM.");
     }
   }
 
@@ -110,6 +124,7 @@ export function getFeatureStatus(env: AppEnv): FeatureStatus {
   return {
     emailPasswordAuth: true,
     passwordResetEmail: smtpConfigured ? "smtp" : "dev-console",
+    emailVerificationEmail: smtpConfigured ? "smtp" : "dev-console",
     telegramLogin: Boolean(env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_BOT_USERNAME),
     csvImportExport: true,
     learningDashboard: true

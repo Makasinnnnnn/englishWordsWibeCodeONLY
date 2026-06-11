@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { ZodError } from "zod";
 
 import { authError, authOk, authValidationError, createSession, hashPassword, normalizeAuthEmail } from "@/lib/auth";
+import { sendVerificationForUser } from "@/lib/auth/email-verification";
 import { isPrismaUniqueViolation } from "@/lib/apiResponse";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit, getClientIp, makeRateLimitKey } from "@/lib/rate-limit";
@@ -36,8 +37,9 @@ export async function POST(request: NextRequest) {
     });
 
     await createSession(user.id);
+    await sendVerificationForUser(user.id);
 
-    return authOk({ user }, 201);
+    return authOk({ user, emailVerificationSent: Boolean(user.email) }, 201);
   } catch (error) {
     if (error instanceof ZodError) {
       return authValidationError(error);

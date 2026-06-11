@@ -8,6 +8,7 @@ import { ZodError } from "zod";
 import { TelegramLoginButton } from "@/components/auth/TelegramLoginButton";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { useToast } from "@/components/Toast";
 import { setPasswordSchema } from "@/lib/validation/auth-schemas";
 
@@ -15,6 +16,7 @@ type AccountSettingsClientProps = {
   telegramBotUsername?: string;
   account: {
     email: string | null;
+    emailVerifiedAt: string | null;
     displayName: string | null;
     hasPassword: boolean;
     telegram: {
@@ -133,7 +135,9 @@ export function AccountSettingsClient({ account, telegramBotUsername }: AccountS
             <p className="mt-2 break-all text-lg font-semibold text-white">{account.email ?? "Не добавлен"}</p>
             <p className="mt-1 text-xs text-slate-500">
               {account.hasPassword
-                ? "Email/password вход активен."
+                ? account.emailVerifiedAt
+                  ? "Email/password вход активен. Email подтверждён."
+                  : "Email/password вход активен. Email ожидает подтверждения."
                 : "Добавьте email и пароль как запасной способ входа."}
             </p>
           </div>
@@ -243,6 +247,17 @@ export function AccountSettingsClient({ account, telegramBotUsername }: AccountS
           >
             Настройки тренировок
           </Button>
+        </div>
+      </section>
+
+      <section className="panel p-6">
+        <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Appearance</p>
+        <h2 className="mt-1 text-xl font-semibold text-white">Тема интерфейса</h2>
+        <p className="mt-2 text-sm leading-6 text-slate-400">
+          Выберите светлую, тёмную или системную тему. Настройка сохранится на этом устройстве.
+        </p>
+        <div className="mt-4">
+          <ThemeToggle />
         </div>
       </section>
 

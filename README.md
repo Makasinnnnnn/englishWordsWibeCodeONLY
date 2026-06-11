@@ -15,15 +15,20 @@ The app is designed as a free tool for classmates who want to prepare for Englis
 ## Features
 
 - Email/password registration and login.
-- Telegram login/register through the Telegram Login Widget or Telegram bot deep link.
+- Email confirmation after registration, with resend from the signed-in app.
+- Telegram login/register through a Telegram bot deep link.
 - Telegram linking/unlinking from account settings.
 - Password reset by email, with a console mailer fallback in development.
 - Personal dictionary with English word, translation, association, image URL, notes, difficulty, and review state.
 - Word add/edit/delete/detail flows.
 - Training modes: hint ladder, multiple choice, manual input, reverse translation, image association, and progressive hints.
-- Typo detection with Levenshtein distance.
+- Typo detection with Levenshtein distance, answer variants, punctuation normalization, and short-answer safeguards.
 - Review scheduling with level, streak, correct, wrong, typo, and next review fields.
+- Analytics page with accuracy, due words, weekly activity, and hardest words.
 - CSV import/export from settings.
+- Authenticated translation and image suggestion endpoints for word creation.
+- Light, dark, and system theme switching.
+- Installable PWA shell for mobile home screens.
 - Account deletion with confirmation.
 
 ## Screenshots
@@ -85,7 +90,10 @@ demo-password
 ```env
 DATABASE_URL="file:./dev.db"
 APP_URL="https://uchi-slovo.ru"
+NEXT_PUBLIC_APP_URL="https://uchi-slovo.ru"
+SESSION_SECRET="change-me-in-production"
 SESSION_TTL_DAYS="30"
+EMAIL_VERIFICATION_TOKEN_TTL_MINUTES="1440"
 
 TELEGRAM_BOT_TOKEN=""
 TELEGRAM_BOT_USERNAME=""
@@ -126,6 +134,7 @@ npm run test:watch
 npm run format
 npm run format:check
 npm run check:config
+npm run db:validate
 npm run db:generate
 npm run db:migrate
 npm run db:studio
@@ -145,6 +154,8 @@ npm run seed
 app/                  Next.js pages and API routes
 components/           Reusable UI, auth, word, and training components
 lib/auth/             Password, session, Telegram, and reset-token helpers
+lib/analytics/        Word analytics calculations
+lib/training/         Review scheduling logic
 lib/validation/       Zod schemas
 lib/email/            Mailer abstraction
 lib/import-export/    CSV parsing and export formatting
@@ -158,7 +169,8 @@ docs/screenshots/     Screenshots for README and portfolio review
 - Passwords are hashed with PBKDF2.
 - Session cookies are HTTP-only and use `sameSite=lax`.
 - Session tokens are stored in the database as SHA-256 hashes.
-- Telegram Login Widget auth data is verified server-side with the bot token.
+- Email verification tokens are stored as SHA-256 hashes and expire.
+- Telegram Login Widget auth data can be verified server-side, but the UI uses the bot deep-link flow by default to avoid domain-widget failures in local/dev environments.
 - Telegram bot login uses one-time hashed login tokens and a webhook secret.
 - Password reset tokens are stored as hashes and expire.
 - Auth endpoints use in-memory rate limiting for the pet-project version.
@@ -167,7 +179,7 @@ Telegram setup:
 
 1. Create a bot with [BotFather](https://t.me/BotFather).
 2. Set the website domain with `/setdomain`: `uchi-slovo.ru`.
-3. Fill `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, and `TELEGRAM_WEBHOOK_SECRET` in `.env`.
+3. Fill `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME` without `@`, and `TELEGRAM_WEBHOOK_SECRET` in `.env`.
 4. Register the webhook after deployment:
 
 ```bash
@@ -190,11 +202,42 @@ For local Telegram testing, use an HTTPS tunnel and set `APP_URL` to that URL. F
 
 Telegram learning reminders and rich bot commands are not implemented yet. They are listed in the roadmap.
 
+## Email Confirmation
+
+After email/password registration, the app creates a hashed verification token and sends a confirmation link to `/verify-email?token=...`.
+
+If SMTP is not configured, the link is printed in the server console. Signed-in users with an unverified email see a banner with a resend button.
+
+## Mobile And PWA
+
+The app includes:
+
+- responsive auth, dashboard, dictionary, training, settings, and analytics layouts;
+- mobile bottom navigation for the main app sections;
+- `public/manifest.webmanifest`;
+- PWA icons in `public/icons`;
+- a small service worker that caches static assets and the offline fallback, but does not cache `/api/*`;
+- an install prompt with iOS instructions.
+
+On iOS, open the site in Safari, tap Share, then choose "Add to Home Screen".
+
+## Theme Switching
+
+Use the theme control in the header or account settings. Supported modes:
+
+- light;
+- dark;
+- system.
+
+The preference is saved in `localStorage`.
+
 ## Security And Privacy
 
 - Secrets are read from env variables and are not committed.
 - `.env*`, local SQLite databases, logs, build output, and caches are ignored.
 - User-owned data is scoped by `userId`.
+- Word update, delete, review, import, export, analytics, and suggestion APIs require the current user.
+- Email verification, password reset, session, and Telegram login tokens are stored hashed.
 - Account deletion removes the user and related data through Prisma cascade rules.
 - In production, replace in-memory rate limiting with Redis or Upstash.
 

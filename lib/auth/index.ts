@@ -12,6 +12,7 @@ export {
   type AuthUser
 } from "./session";
 export { createOpaqueToken, hashOpaqueToken } from "./tokens";
+export { createEmailVerificationToken, sendVerificationForUser, verifyEmailToken } from "./email-verification";
 
 export function normalizeAuthEmail(email: string) {
   const value = email.trim().toLowerCase();

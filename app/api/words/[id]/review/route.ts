@@ -5,7 +5,7 @@ import { apiError, validationError } from "@/lib/apiResponse";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { reviewSchema } from "@/lib/schemas";
-import { getReviewUpdateState } from "@/lib/wordLogic";
+import { getReviewUpdateState } from "@/lib/training/scheduler";
 import { serializeWord } from "@/lib/wordSerializer";
 
 export const dynamic = "force-dynamic";
@@ -33,11 +33,10 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
       return apiError("Word not found", { status: 404, code: "WORD_NOT_FOUND" });
     }
 
-    const nextState = getReviewUpdateState(existingWord, result);
     const reviewedAt = new Date();
-
-    const word = await prisma.word.update({
-      where: { id: params.id },
+    const nextState = getReviewUpdateState(existingWord, result, reviewedAt);
+    const updateResult = await prisma.word.updateMany({
+      where: { id: params.id, userId: user.id },
       data: {
         correctCount: result === "correct" ? { increment: 1 } : undefined,
         typoCount: result === "typo" ? { increment: 1 } : undefined,
@@ -51,6 +50,18 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
         nextReviewAt: nextState.nextReviewAt
       }
     });
+
+    if (updateResult.count === 0) {
+      return apiError("Word not found", { status: 404, code: "WORD_NOT_FOUND" });
+    }
+
+    const word = await prisma.word.findFirst({
+      where: { id: params.id, userId: user.id }
+    });
+
+    if (!word) {
+      return apiError("Word not found", { status: 404, code: "WORD_NOT_FOUND" });
+    }
 
     return NextResponse.json({ word: serializeWord(word) });
   } catch (error) {

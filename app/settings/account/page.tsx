@@ -10,6 +10,7 @@ export default async function AccountSettingsPage() {
     where: { id: user.id },
     select: {
       email: true,
+      emailVerifiedAt: true,
       displayName: true,
       passwordHash: true,
       telegram: {
@@ -28,6 +29,7 @@ export default async function AccountSettingsPage() {
       telegramBotUsername={process.env.TELEGRAM_BOT_USERNAME}
       account={{
         email: account?.email ?? null,
+        emailVerifiedAt: account?.emailVerifiedAt?.toISOString() ?? null,
         displayName: account?.displayName ?? null,
         hasPassword: Boolean(account?.passwordHash),
         telegram: account?.telegram ?? null

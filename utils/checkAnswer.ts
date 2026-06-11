@@ -7,7 +7,13 @@ export type CheckAnswerResult = {
 };
 
 export function normalizeAnswer(text: string) {
-  return text.trim().toLowerCase().replace(/\s+/g, " ");
+  return text
+    .trim()
+    .toLowerCase()
+    .replaceAll("ё", "е")
+    .replace(/[.,!?;:()[\]{}"']/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 export function levenshteinDistance(a: string, b: string) {
@@ -49,10 +55,24 @@ export function levenshteinDistance(a: string, b: string) {
 
 export function checkAnswer(userAnswer: string, correctAnswer: string): CheckAnswerResult {
   const normalizedUserAnswer = normalizeAnswer(userAnswer);
-  const normalizedCorrectAnswer = normalizeAnswer(correctAnswer);
-  const distance = levenshteinDistance(normalizedUserAnswer, normalizedCorrectAnswer);
+  const answerVariants = correctAnswer
+    .split(/[,/;|]+/)
+    .map((variant) => normalizeAnswer(variant))
+    .filter(Boolean);
+  const normalizedCorrectAnswers = answerVariants.length > 0 ? answerVariants : [normalizeAnswer(correctAnswer)];
+  const distances = normalizedCorrectAnswers.map((answer) => levenshteinDistance(normalizedUserAnswer, answer));
+  const distance = Math.min(...distances);
+  const closestAnswer = normalizedCorrectAnswers[distances.indexOf(distance)] ?? normalizedCorrectAnswers[0];
 
-  if (normalizedUserAnswer === normalizedCorrectAnswer) {
+  if (normalizedUserAnswer.length === 0) {
+    return {
+      status: "wrong",
+      distance,
+      message: `Неправильно. Правильный ответ: ${correctAnswer}`
+    };
+  }
+
+  if (normalizedCorrectAnswers.includes(normalizedUserAnswer)) {
     return {
       status: "correct",
       distance,
@@ -60,7 +80,7 @@ export function checkAnswer(userAnswer: string, correctAnswer: string): CheckAns
     };
   }
 
-  const typoThreshold = normalizedCorrectAnswer.length >= 8 ? 2 : 1;
+  const typoThreshold = closestAnswer.length >= 8 ? 2 : closestAnswer.length >= 4 ? 1 : 0;
 
   if (distance <= typoThreshold) {
     return {

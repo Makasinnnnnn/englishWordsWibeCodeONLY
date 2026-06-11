@@ -11,8 +11,18 @@ const emptyToUndefined = (value: unknown) => {
 
 export const difficultySchema = z.enum(["easy", "medium", "hard"]);
 
+const remoteImageUrlSchema = z
+  .string()
+  .trim()
+  .url()
+  .max(1000, "Image URL is too long")
+  .refine((value) => {
+    const protocol = new URL(value).protocol;
+    return protocol === "http:" || protocol === "https:";
+  }, "Image URL must use http or https");
+
 const imageValueSchema = z.union([
-  z.string().trim().url().max(1000, "Image URL is too long"),
+  remoteImageUrlSchema,
   z.string().startsWith("data:image/", "Uploaded file must be an image").max(2_500_000, "Image file is too large")
 ]);
 
@@ -35,6 +45,12 @@ export const reviewSchema = z.object({
   result: z.enum(["correct", "typo", "wrong"])
 });
 
+export const suggestionQuerySchema = z.object({
+  word: z.string().trim().min(1, "Word is required").max(80),
+  association: z.string().trim().max(240).optional()
+});
+
 export type WordMutationInput = z.infer<typeof wordMutationSchema>;
 export type WordUpdateInput = z.infer<typeof wordUpdateSchema>;
 export type ReviewInput = z.infer<typeof reviewSchema>;
+export type SuggestionQueryInput = z.infer<typeof suggestionQuerySchema>;

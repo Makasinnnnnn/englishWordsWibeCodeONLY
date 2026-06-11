@@ -18,8 +18,11 @@ Local SQLite files, logs, build output, and cache folders are ignored by Git. Ke
 - Telegram auth data is verified server-side.
 - Telegram bot webhook requests are protected with `TELEGRAM_WEBHOOK_SECRET` in deployed environments.
 - Password reset tokens are stored as hashes and expire.
+- Email verification tokens are stored as hashes and expire.
 - Auth endpoints are rate-limited in memory for local/demo use.
 - User data is scoped by `userId`.
+- Suggestion, analytics, word mutation, CSV import/export, and account APIs require authentication.
+- The PWA service worker does not cache `/api/*`.
 - Account deletion is supported.
 
 ## Production Notes

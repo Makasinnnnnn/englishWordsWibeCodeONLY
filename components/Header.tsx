@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Dumbbell, Menu, PlusCircle } from "lucide-react";
+import { Dumbbell, PlusCircle } from "lucide-react";
 
 import { Button } from "@/components/Button";
 import { LogoutButton } from "@/components/LogoutButton";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import type { AuthUser } from "@/lib/auth";
 
 const titles: Array<[string, string]> = [
@@ -13,9 +14,11 @@ const titles: Array<[string, string]> = [
   ["/register", "Создание аккаунта"],
   ["/forgot-password", "Восстановление пароля"],
   ["/reset-password", "Новый пароль"],
+  ["/verify-email", "Подтверждение email"],
   ["/words/new", "Добавление слова"],
   ["/words", "Словарь"],
   ["/training", "Тренировка"],
+  ["/analytics", "Аналитика"],
   ["/settings/account", "Аккаунт"],
   ["/settings", "Настройки тренировок"],
   ["/", "Панель обучения"]
@@ -40,6 +43,7 @@ export function Header({ user }: { user: AuthUser | null }) {
 
         {user ? (
           <div className="hidden items-center gap-2 sm:flex">
+            <ThemeToggle compact />
             <Link href="/words/new">
               <Button variant="secondary" icon={<PlusCircle className="h-4 w-4" />}>
                 Добавить слово
@@ -52,13 +56,14 @@ export function Header({ user }: { user: AuthUser | null }) {
             </Link>
             <LogoutButton />
           </div>
+        ) : (
+          <ThemeToggle compact />
+        )}
+        {user ? (
+          <div className="sm:hidden">
+            <ThemeToggle compact />
+          </div>
         ) : null}
-
-        <div className="sm:hidden">
-          <Link href={user ? "/words" : "/login"}>
-            <Button variant="ghost" size="icon" aria-label="Открыть навигацию" icon={<Menu className="h-5 w-5" />} />
-          </Link>
-        </div>
       </div>
     </header>
   );

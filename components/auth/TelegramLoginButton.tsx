@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { ExternalLink, RefreshCw, Send } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { CheckCircle2, Clock3, ExternalLink, RefreshCw, Send, ShieldAlert } from "lucide-react";
 
 import { useToast } from "@/components/Toast";
 
@@ -9,6 +9,7 @@ type TelegramLoginButtonProps = {
   botUsername?: string;
   endpoint: string;
   label?: string;
+  isDevelopment?: boolean;
   onSuccess: () => void;
 };
 
@@ -38,19 +39,29 @@ export function TelegramLoginButton({
   botUsername,
   endpoint,
   label = "Continue with Telegram",
+  isDevelopment = false,
   onSuccess
 }: TelegramLoginButtonProps) {
   const { showToast } = useToast();
-  const containerRef = useRef<HTMLDivElement>(null);
-  const callbackNameRef = useRef(`onTelegramAuth_${Math.random().toString(36).slice(2)}`);
   const pollingRef = useRef<number | null>(null);
-  const [loading, setLoading] = useState(false);
   const [startingBot, setStartingBot] = useState(false);
   const [checkingBot, setCheckingBot] = useState(false);
   const [botToken, setBotToken] = useState<string | null>(null);
   const [botLoginUrl, setBotLoginUrl] = useState<string | null>(null);
   const [botExpiresAt, setBotExpiresAt] = useState<string | null>(null);
+  const [now, setNow] = useState(() => Date.now());
   const mode = endpoint.includes("/link") ? "link" : "auth";
+  const cleanBotUsername = botUsername?.trim().replace(/^@/, "");
+  const secondsLeft = botExpiresAt ? Math.max(0, Math.ceil((new Date(botExpiresAt).getTime() - now) / 1000)) : null;
+  const minutesLeft = secondsLeft === null ? null : Math.floor(secondsLeft / 60);
+  const secondsRemainder = secondsLeft === null ? null : secondsLeft % 60;
+  const countdownLabel = useMemo(() => {
+    if (minutesLeft === null || secondsRemainder === null) {
+      return "10 минут";
+    }
+
+    return `${minutesLeft}:${String(secondsRemainder).padStart(2, "0")}`;
+  }, [minutesLeft, secondsRemainder]);
 
   const clearPolling = useCallback(() => {
     if (pollingRef.current) {
@@ -76,6 +87,14 @@ export function TelegramLoginButton({
       setCheckingBot(true);
 
       try {
+        if (botExpiresAt && new Date(botExpiresAt).getTime() <= Date.now()) {
+          clearPolling();
+          setBotToken(null);
+          setBotLoginUrl(null);
+          setBotExpiresAt(null);
+          throw new Error("Срок Telegram-ссылки истёк. Создайте новую.");
+        }
+
         const response = await fetch(`/api/auth/telegram/bot/status?token=${encodeURIComponent(token)}`, {
           method: "GET"
         });
@@ -110,7 +129,7 @@ export function TelegramLoginButton({
         setCheckingBot(false);
       }
     },
-    [clearPolling, completeBotFlow, showToast]
+    [botExpiresAt, clearPolling, completeBotFlow, showToast]
   );
 
   const startBotLogin = useCallback(async () => {
@@ -159,77 +178,45 @@ export function TelegramLoginButton({
   }, [clearPolling]);
 
   useEffect(() => {
-    const container = containerRef.current;
+    const interval = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(interval);
+  }, []);
 
-    if (!container || !botUsername) {
-      return;
-    }
-
-    const callbackName = callbackNameRef.current;
-    const callbacks = window as unknown as Record<string, ((user: unknown) => void) | undefined>;
-
-    callbacks[callbackName] = async (telegramUser: unknown) => {
-      setLoading(true);
-      try {
-        const response = await fetch(endpoint, {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify(telegramUser)
-        });
-        const data = (await response.json()) as AuthResponse;
-
-        if (!response.ok || !data.ok) {
-          throw new Error(data.error?.message ?? "Telegram login failed");
-        }
-
-        showToast(mode === "link" ? "Telegram привязан" : "Вход через Telegram выполнен", "success");
-        onSuccess();
-      } catch (error) {
-        showToast(error instanceof Error ? error.message : "Не удалось войти через Telegram", "error");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    container.innerHTML = "";
-    const script = document.createElement("script");
-    script.async = true;
-    script.src = "https://telegram.org/js/telegram-widget.js?22";
-    script.dataset.telegramLogin = botUsername.replace(/^@/, "");
-    script.dataset.size = "large";
-    script.dataset.radius = "8";
-    script.dataset.requestAccess = "write";
-    script.dataset.onauth = `${callbackName}(user)`;
-    container.appendChild(script);
-
-    return () => {
-      callbacks[callbackName] = undefined;
-      container.innerHTML = "";
-    };
-  }, [botUsername, endpoint, mode, onSuccess, showToast]);
-
-  if (!botUsername) {
+  if (!cleanBotUsername) {
     return (
-      <div className="rounded-lg border border-white/10 bg-white/[0.035] p-3 text-sm text-slate-400">
-        <div className="flex items-center gap-2 text-slate-200">
-          <Send className="h-4 w-4" />
+      <div className="rounded-lg border border-amber-300/20 bg-amber-400/[0.08] p-4 text-sm text-slate-300">
+        <div className="flex items-center gap-2 text-amber-100">
+          <ShieldAlert className="h-4 w-4" />
           {label}
         </div>
-        <p className="mt-2 text-xs leading-5 text-slate-500">
-          Telegram вход появится после настройки TELEGRAM_BOT_USERNAME и TELEGRAM_BOT_TOKEN в `.env`.
-        </p>
+        {isDevelopment ? (
+          <p className="mt-2 text-xs leading-5 text-slate-500">
+            Telegram вход появится после настройки TELEGRAM_BOT_USERNAME и TELEGRAM_BOT_TOKEN в `.env`.
+          </p>
+        ) : (
+          <p className="mt-2 text-xs leading-5 text-slate-500">Telegram вход временно недоступен.</p>
+        )}
       </div>
     );
   }
 
   return (
-    <div className="space-y-3">
-      <div className={loading ? "pointer-events-none opacity-60" : undefined} ref={containerRef} />
-
+    <div className="rounded-lg border border-sky-300/20 bg-sky-500/[0.08] p-4">
+      <div className="mb-3 flex items-start gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sky-400/15 text-sky-100">
+          <Send className="h-5 w-5" />
+        </div>
+        <div className="min-w-0">
+          <p className="font-medium text-white">{label}</p>
+          <p className="mt-1 text-xs leading-5 text-slate-400">
+            Откройте @{cleanBotUsername}, нажмите Start и вернитесь сюда для проверки входа.
+          </p>
+        </div>
+      </div>
       <button
         type="button"
-        className="focus-ring inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-sky-300/20 bg-sky-500/15 px-4 py-2.5 text-sm font-medium text-sky-100 transition hover:bg-sky-500/25 disabled:cursor-not-allowed disabled:opacity-60"
-        disabled={loading || startingBot || checkingBot}
+        className="focus-ring inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg border border-sky-300/25 bg-sky-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
+        disabled={startingBot || checkingBot}
         onClick={() => void startBotLogin()}
       >
         {startingBot ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
@@ -237,14 +224,27 @@ export function TelegramLoginButton({
       </button>
 
       {botToken && botLoginUrl ? (
-        <div className="rounded-lg border border-sky-300/15 bg-sky-400/[0.06] p-3 text-xs leading-5 text-slate-300">
-          <p>
-            Нажмите <span className="font-semibold text-sky-100">Start</span> в Telegram, затем вернитесь сюда. Ссылка
-            действует {botExpiresAt ? "около 10 минут" : "несколько минут"}.
-          </p>
-          <div className="mt-3 flex flex-wrap gap-2">
+        <div className="mt-3 rounded-lg border border-white/10 bg-white/[0.05] p-3 text-xs leading-5 text-slate-300">
+          <div className="flex items-start gap-2">
+            {secondsLeft === 0 ? (
+              <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-200" />
+            ) : (
+              <Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-sky-200" />
+            )}
+            <p>
+              {secondsLeft === 0 ? (
+                "Срок ссылки истёк. Создайте новую Telegram-ссылку."
+              ) : (
+                <>
+                  Нажмите <span className="font-semibold text-sky-100">Start</span> в Telegram. Ссылка действует{" "}
+                  <span className="font-semibold text-sky-100">{countdownLabel}</span>.
+                </>
+              )}
+            </p>
+          </div>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
             <a
-              className="focus-ring inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/[0.06] px-3 py-2 font-medium text-slate-100 hover:bg-white/[0.1]"
+              className="focus-ring inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-white/10 bg-white/[0.06] px-3 py-2 font-medium text-slate-100 hover:bg-white/[0.1]"
               href={botLoginUrl}
               rel="noreferrer"
               target="_blank"
@@ -254,17 +254,20 @@ export function TelegramLoginButton({
             </a>
             <button
               type="button"
-              className="focus-ring inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/[0.06] px-3 py-2 font-medium text-slate-100 hover:bg-white/[0.1] disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={checkingBot}
+              className="focus-ring inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-white/10 bg-white/[0.06] px-3 py-2 font-medium text-slate-100 hover:bg-white/[0.1] disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={checkingBot || secondsLeft === 0}
               onClick={() => void checkBotStatus(botToken, true)}
             >
-              {checkingBot ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : null}Я нажал Start
+              {checkingBot ? (
+                <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <CheckCircle2 className="h-3.5 w-3.5" />
+              )}
+              Проверить вход
             </button>
           </div>
         </div>
       ) : null}
-
-      {loading ? <p className="text-xs text-slate-500">Проверяем Telegram...</p> : null}
     </div>
   );
 }

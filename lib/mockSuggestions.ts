@@ -26,8 +26,17 @@ export function suggestTranslation(word: string) {
   return translationMap[key] ?? "";
 }
 
+function escapeSvgText(text: string) {
+  return text
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&apos;");
+}
+
 function makeFallbackImage(word: string) {
-  const label = (word || "word").trim().slice(0, 18);
+  const label = escapeSvgText((word || "word").trim().slice(0, 18));
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="420" viewBox="0 0 640 420">
     <defs>
       <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">

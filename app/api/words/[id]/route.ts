@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 
-import { apiError, isPrismaNotFound, isPrismaUniqueViolation, validationError } from "@/lib/apiResponse";
+import { apiError, isPrismaUniqueViolation, validationError } from "@/lib/apiResponse";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { wordUpdateSchema } from "@/lib/schemas";
@@ -46,19 +46,10 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
       return apiError("Authentication required", { status: 401, code: "UNAUTHORIZED" });
     }
 
-    const existingWord = await prisma.word.findFirst({
-      where: { id: params.id, userId: user.id },
-      select: { id: true }
-    });
-
-    if (!existingWord) {
-      return apiError("Word not found", { status: 404, code: "WORD_NOT_FOUND" });
-    }
-
     const payload = wordUpdateSchema.parse(await request.json());
     const { nextReviewAt, ...restPayload } = payload;
-    const word = await prisma.word.update({
-      where: { id: params.id },
+    const updateResult = await prisma.word.updateMany({
+      where: { id: params.id, userId: user.id },
       data: {
         ...restPayload,
         englishNormalized: payload.english ? normalizeEnglishWord(payload.english) : undefined,
@@ -66,14 +57,22 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
       }
     });
 
+    if (updateResult.count === 0) {
+      return apiError("Word not found", { status: 404, code: "WORD_NOT_FOUND" });
+    }
+
+    const word = await prisma.word.findFirst({
+      where: { id: params.id, userId: user.id }
+    });
+
+    if (!word) {
+      return apiError("Word not found", { status: 404, code: "WORD_NOT_FOUND" });
+    }
+
     return NextResponse.json({ word: serializeWord(word) });
   } catch (error) {
     if (error instanceof ZodError) {
       return validationError(error);
-    }
-
-    if (isPrismaNotFound(error)) {
-      return apiError("Word not found", { status: 404, code: "WORD_NOT_FOUND" });
     }
 
     if (isPrismaUniqueViolation(error)) {
@@ -95,25 +94,16 @@ export async function DELETE(_request: NextRequest, { params }: RouteContext) {
       return apiError("Authentication required", { status: 401, code: "UNAUTHORIZED" });
     }
 
-    const existingWord = await prisma.word.findFirst({
-      where: { id: params.id, userId: user.id },
-      select: { id: true }
+    const deleteResult = await prisma.word.deleteMany({
+      where: { id: params.id, userId: user.id }
     });
 
-    if (!existingWord) {
+    if (deleteResult.count === 0) {
       return apiError("Word not found", { status: 404, code: "WORD_NOT_FOUND" });
     }
-
-    await prisma.word.delete({
-      where: { id: params.id }
-    });
 
     return NextResponse.json({ ok: true });
-  } catch (error) {
-    if (isPrismaNotFound(error)) {
-      return apiError("Word not found", { status: 404, code: "WORD_NOT_FOUND" });
-    }
-
+  } catch {
     return apiError("Failed to delete word");
   }
 }

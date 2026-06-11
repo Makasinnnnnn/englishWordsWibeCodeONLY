@@ -9,6 +9,7 @@ npm run db:generate
 npm run db:migrate
 npm run seed
 npm run check:config
+npm run db:validate
 npm run dev
 ```
 
@@ -42,6 +43,7 @@ Useful commands:
 
 ```bash
 npm run db:generate
+npm run db:validate
 npm run db:migrate
 npm run db:studio
 npm run check:config
@@ -53,7 +55,7 @@ Users can register with email/password or Telegram. Passwords are stored as PBKD
 
 Auth endpoints use a small in-memory rate limiter. It is good enough for local/demo use; production should use Redis or another shared store.
 
-Telegram Login Widget data is verified in `lib/auth/telegram.ts` using the official data-check-string and HMAC-SHA256 flow. Configure the bot through BotFather `/setdomain`.
+Telegram Login Widget data is still verified in `lib/auth/telegram.ts`, but the UI uses bot deep-link login by default. This avoids the raw `Bot domain invalid` widget error when the BotFather domain, localhost, or deployment URL are not aligned.
 
 Telegram bot login uses:
 
@@ -77,11 +79,48 @@ curl -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook" \
 
 Password reset uses hashed reset tokens. Without SMTP config, `lib/email/mailer.ts` prints the reset URL to the server console.
 
+Email confirmation uses hashed verification tokens. Without SMTP config, `lib/email/mailer.ts` prints the verification URL to the server console. The signed-in app shows a resend banner until `emailVerifiedAt` is set.
+
 `npm run check:config` checks whether Telegram, SMTP, Prisma migrations, and the database connection are ready.
+
+## Telegram Local Development
+
+For local bot testing:
+
+1. Start the app with `npm run dev`.
+2. Expose it through ngrok or cloudflared.
+3. Set `APP_URL` and `NEXT_PUBLIC_APP_URL` to the HTTPS tunnel URL.
+4. Register the webhook:
+
+```bash
+curl -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook" \
+  -d "url=$APP_URL/api/auth/telegram/webhook" \
+  -d "secret_token=$TELEGRAM_WEBHOOK_SECRET"
+```
+
+The Telegram deep link has this shape:
+
+```text
+https://t.me/<BOT_USERNAME>?start=auth_<one-time-token>
+```
+
+Do not include `@` in `TELEGRAM_BOT_USERNAME`.
 
 ## Training Scheduler
 
 Review state lives on each word: level, streak, counts, last result, and next review date. Correct answers move reviews farther into the future, wrong answers lower the level and make the word due sooner, and typos keep the level stable.
+
+## Analytics
+
+Analytics lives in `lib/analytics/word-analytics.ts` and is exposed through `/analytics` and `GET /api/analytics`. It only reads words for the current `userId`.
+
+## PWA And Themes
+
+PWA files live in `public/manifest.webmanifest`, `public/sw.js`, `public/offline.html`, and `public/icons`.
+
+The service worker is registered only in production and does not cache `/api/*`.
+
+Theme switching is implemented in `components/theme/ThemeToggle.tsx`. It stores `light`, `dark`, or `system` in `localStorage` and sets `data-theme` on `<html>`.
 
 ## CSV Import And Export
 
@@ -100,6 +139,10 @@ app/                  Pages and API routes
 components/           UI components
 components/auth/      Auth forms and account settings UI
 lib/auth/             Auth helpers
+lib/analytics/        Word analytics helpers
+lib/training/         Review scheduler
+components/pwa/       PWA registration and install prompt
+components/theme/     Theme controls
 lib/validation/       Zod schemas
 lib/import-export/    CSV logic
 utils/                Training helpers and tests
@@ -124,6 +167,7 @@ prisma/               Schema, migrations, seed
 
 ```bash
 npm run format
+npm run db:validate
 npm run lint
 npm run typecheck
 npm test

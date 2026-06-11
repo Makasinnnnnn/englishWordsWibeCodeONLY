@@ -60,6 +60,10 @@ export const resetPasswordSchema = z
     message: "Пароли не совпадают"
   });
 
+export const verifyEmailSchema = z.object({
+  token: z.string().trim().min(20, "Некорректная ссылка подтверждения")
+});
+
 export const setPasswordSchema = z
   .object({
     email: emailSchema,
@@ -111,6 +115,7 @@ export type LoginInput = z.infer<typeof loginSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;
 export type SetPasswordInput = z.infer<typeof setPasswordSchema>;
 export type TelegramAuthInput = z.infer<typeof telegramAuthSchema>;
 export type TelegramBotStartInput = z.infer<typeof telegramBotStartSchema>;

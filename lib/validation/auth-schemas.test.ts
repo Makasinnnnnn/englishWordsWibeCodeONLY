@@ -5,7 +5,8 @@ import {
   registerSchema,
   resetPasswordSchema,
   telegramBotStartSchema,
-  telegramBotTokenSchema
+  telegramBotTokenSchema,
+  verifyEmailSchema
 } from "./auth-schemas";
 
 describe("auth validation schemas", () => {
@@ -41,6 +42,11 @@ describe("auth validation schemas", () => {
         confirmPassword: "StrongPass124"
       }).success
     ).toBe(false);
+  });
+
+  it("validates email verification tokens", () => {
+    expect(verifyEmailSchema.safeParse({ token: "a".repeat(40) }).success).toBe(true);
+    expect(verifyEmailSchema.safeParse({ token: "short" }).success).toBe(false);
   });
 
   it("defaults bot start mode to auth", () => {

@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 export const sessionCookieName = "word_trainer_session";
 
 export type AuthUser = Pick<User, "id" | "email" | "username" | "displayName" | "avatarUrl"> & {
+  emailVerifiedAt: string | null;
   hasPassword: boolean;
 };
 
@@ -72,6 +73,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
         select: {
           id: true,
           email: true,
+          emailVerifiedAt: true,
           username: true,
           displayName: true,
           avatarUrl: true,
@@ -91,6 +93,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
   return {
     id: session.user.id,
     email: session.user.email,
+    emailVerifiedAt: session.user.emailVerifiedAt ? session.user.emailVerifiedAt.toISOString() : null,
     username: session.user.username,
     displayName: session.user.displayName,
     avatarUrl: session.user.avatarUrl,

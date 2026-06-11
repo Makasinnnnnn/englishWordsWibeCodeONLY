@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { ZodError } from "zod";
 
 import { authError, authOk, authValidationError, getCurrentUser, hashPassword, normalizeAuthEmail } from "@/lib/auth";
+import { sendVerificationForUser } from "@/lib/auth/email-verification";
 import { isPrismaUniqueViolation } from "@/lib/apiResponse";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit, getClientIp, makeRateLimitKey } from "@/lib/rate-limit";
@@ -26,12 +27,18 @@ export async function POST(request: NextRequest) {
     }
 
     const email = normalizeAuthEmail(payload.email);
+    const currentUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { email: true }
+    });
+    const emailChanged = currentUser?.email !== email;
     const updated = await prisma.user.update({
       where: { id: user.id },
       data: {
         email,
         displayName: payload.displayName?.trim() || undefined,
-        passwordHash: await hashPassword(payload.password)
+        passwordHash: await hashPassword(payload.password),
+        emailVerifiedAt: emailChanged ? null : undefined
       },
       select: {
         id: true,
@@ -40,7 +47,9 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    return authOk({ user: updated });
+    await sendVerificationForUser(user.id);
+
+    return authOk({ user: updated, emailVerificationSent: Boolean(updated.email) });
   } catch (error) {
     if (error instanceof ZodError) {
       return authValidationError(error);
