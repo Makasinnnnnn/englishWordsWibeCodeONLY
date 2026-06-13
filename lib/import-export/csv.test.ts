@@ -33,6 +33,23 @@ describe("CSV import/export", () => {
     expect(csv).toContain("apple,яблоко,red fruit,,common word,easy");
   });
 
+  it("neutralizes spreadsheet formulas on export", () => {
+    const csv = wordsToCsv([
+      {
+        ...baseWord,
+        english: '=IMPORTXML("https://example.com")',
+        translation: "+SUM(1,2)",
+        association: "-cmd",
+        notes: "@external"
+      }
+    ]);
+
+    expect(csv).toContain("'=IMPORTXML");
+    expect(csv).toContain("'+SUM(1,2)");
+    expect(csv).toContain("'-cmd");
+    expect(csv).toContain("'@external");
+  });
+
   it("parses valid words and reports invalid rows", () => {
     const result = parseWordsCsv("english,translation,difficulty\nbook,книга,easy\n,empty,medium");
 

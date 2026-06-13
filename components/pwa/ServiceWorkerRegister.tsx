@@ -8,7 +8,21 @@ export function ServiceWorkerRegister() {
       return;
     }
 
-    void navigator.serviceWorker.register("/sw.js");
+    void navigator.serviceWorker.register("/sw.js").then((registration) => {
+      if (registration.waiting) {
+        registration.waiting.postMessage({ type: "SKIP_WAITING" });
+      }
+
+      registration.addEventListener("updatefound", () => {
+        const worker = registration.installing;
+
+        worker?.addEventListener("statechange", () => {
+          if (worker.state === "installed" && navigator.serviceWorker.controller) {
+            worker.postMessage({ type: "SKIP_WAITING" });
+          }
+        });
+      });
+    });
   }, []);
 
   return null;

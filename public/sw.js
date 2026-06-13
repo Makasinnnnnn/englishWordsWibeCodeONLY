@@ -1,7 +1,13 @@
-const CACHE_VERSION = "word-memory-v1";
+const CACHE_VERSION = "word-memory-v2";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const OFFLINE_URL = "/offline.html";
-const STATIC_ASSETS = [OFFLINE_URL, "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];
+const STATIC_ASSETS = [
+  OFFLINE_URL,
+  "/manifest.webmanifest",
+  "/icons/icon-192.png",
+  "/icons/icon-512.png",
+  "/icons/maskable-512.png"
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -14,13 +20,21 @@ self.addEventListener("install", (event) => {
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches
-      .keys()
-      .then((keys) =>
-        Promise.all(keys.filter((key) => !key.startsWith(CACHE_VERSION)).map((key) => caches.delete(key)))
-      )
-      .then(() => self.clients.claim())
+    Promise.all([
+      caches
+        .keys()
+        .then((keys) =>
+          Promise.all(keys.filter((key) => !key.startsWith(CACHE_VERSION)).map((key) => caches.delete(key)))
+        ),
+      "navigationPreload" in self.registration ? self.registration.navigationPreload.enable() : Promise.resolve()
+    ]).then(() => self.clients.claim())
   );
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener("fetch", (event) => {
@@ -32,7 +46,21 @@ self.addEventListener("fetch", (event) => {
   }
 
   if (request.mode === "navigate") {
-    event.respondWith(fetch(request).catch(() => caches.match(OFFLINE_URL)));
+    event.respondWith(
+      (async () => {
+        try {
+          return (await event.preloadResponse) || (await fetch(request));
+        } catch {
+          return (
+            (await caches.match(OFFLINE_URL)) ||
+            new Response("Offline", {
+              status: 503,
+              headers: { "content-type": "text/plain; charset=utf-8" }
+            })
+          );
+        }
+      })()
+    );
     return;
   }
 
@@ -48,6 +76,10 @@ self.addEventListener("fetch", (event) => {
         }
 
         return fetch(request).then((response) => {
+          if (!response.ok) {
+            return response;
+          }
+
           const copy = response.clone();
           caches.open(STATIC_CACHE).then((cache) => cache.put(request, copy));
           return response;

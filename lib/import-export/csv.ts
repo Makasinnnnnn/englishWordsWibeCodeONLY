@@ -3,8 +3,12 @@ import type { WordView } from "../wordSerializer";
 
 const csvHeaders = ["english", "translation", "association", "imageUrl", "notes", "difficulty"];
 
+function neutralizeSpreadsheetFormula(value: string) {
+  return /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
+}
+
 function escapeCsvValue(value: unknown) {
-  const text = value == null ? "" : String(value);
+  const text = neutralizeSpreadsheetFormula(value == null ? "" : String(value));
   return /[",\r\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
 }
 

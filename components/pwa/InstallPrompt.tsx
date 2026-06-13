@@ -17,6 +17,14 @@ function isStandaloneDisplay() {
   );
 }
 
+function isInstallPromptDismissed() {
+  try {
+    return localStorage.getItem("word-memory-install-dismissed") === "1";
+  } catch {
+    return false;
+  }
+}
+
 export function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [visible, setVisible] = useState(false);
@@ -30,7 +38,7 @@ export function InstallPrompt() {
   }, []);
 
   useEffect(() => {
-    if (isStandaloneDisplay() || localStorage.getItem("word-memory-install-dismissed") === "1") {
+    if (isStandaloneDisplay() || isInstallPromptDismissed()) {
       return;
     }
 
@@ -65,12 +73,17 @@ export function InstallPrompt() {
   }
 
   function dismiss() {
-    localStorage.setItem("word-memory-install-dismissed", "1");
+    try {
+      localStorage.setItem("word-memory-install-dismissed", "1");
+    } catch {
+      // Some embedded browsers can block storage; dismissal still works for this session.
+    }
+
     setDismissed(true);
   }
 
   return (
-    <div className="fixed bottom-20 left-4 right-4 z-40 mx-auto max-w-md rounded-lg border border-white/10 bg-graphite-850/95 p-4 shadow-glow backdrop-blur lg:bottom-5">
+    <div className="panel fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] left-4 right-4 z-40 mx-auto max-w-md p-4 shadow-glow backdrop-blur lg:bottom-5">
       <div className="flex items-start gap-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sky-400/15 text-sky-100">
           {isiOS ? <Share className="h-5 w-5" /> : <Download className="h-5 w-5" />}

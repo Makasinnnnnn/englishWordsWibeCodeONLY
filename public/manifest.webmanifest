@@ -2,12 +2,17 @@
   "name": "Word Memory Trainer",
   "short_name": "Words",
   "description": "Бесплатный тренажёр английских слов для студентов",
+  "id": "/?source=pwa",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
   "background_color": "#090b10",
   "theme_color": "#090b10",
   "orientation": "portrait-primary",
+  "categories": ["education", "productivity"],
+  "lang": "ru",
+  "dir": "ltr",
   "icons": [
     {
       "src": "/icons/icon-192.png",
@@ -24,6 +29,22 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Добавить слово",
+      "short_name": "Добавить",
+      "description": "Быстро добавить новое слово в словарь",
+      "url": "/words/new",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Начать тренировку",
+      "short_name": "Тренировка",
+      "description": "Открыть текущую очередь повторения",
+      "url": "/training",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ]
 }

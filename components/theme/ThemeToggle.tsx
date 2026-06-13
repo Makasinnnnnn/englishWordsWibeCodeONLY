@@ -13,6 +13,10 @@ const themeOptions: Array<{ value: ThemePreference; label: string; icon: typeof 
   { value: "system", label: "Системная", icon: Monitor }
 ];
 
+function isThemePreference(value: string | null): value is ThemePreference {
+  return value === "light" || value === "dark" || value === "system";
+}
+
 function resolveTheme(preference: ThemePreference) {
   if (preference !== "system") {
     return preference;
@@ -34,10 +38,14 @@ export function ThemeToggle({ compact = false }: { compact?: boolean }) {
   const [theme, setTheme] = useState<ThemePreference>("system");
 
   useEffect(() => {
-    const storedTheme = localStorage.getItem("word-memory-theme") as ThemePreference | null;
-    const initialTheme = storedTheme && ["light", "dark", "system"].includes(storedTheme) ? storedTheme : "system";
+    const storedTheme = localStorage.getItem("word-memory-theme");
+    const initialTheme = isThemePreference(storedTheme) ? storedTheme : "system";
     const media = window.matchMedia("(prefers-color-scheme: light)");
-    const handleChange = () => applyTheme(initialTheme);
+    const handleChange = () => {
+      const currentPreference = localStorage.getItem("word-memory-theme");
+
+      applyTheme(isThemePreference(currentPreference) ? currentPreference : "system");
+    };
 
     setTheme(initialTheme);
     applyTheme(initialTheme);
