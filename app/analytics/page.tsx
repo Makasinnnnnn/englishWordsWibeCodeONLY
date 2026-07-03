@@ -2,9 +2,10 @@ import Link from "next/link";
 import { AlertTriangle, BarChart3, BookOpen, CalendarClock, CheckCircle2, Flame, Target, Trophy } from "lucide-react";
 
 import { Button } from "@/components/Button";
-import { EmptyState } from "@/components/EmptyState";
 import { buildWordAnalytics } from "@/lib/analytics/word-analytics";
 import { requireUser } from "@/lib/auth";
+import { buildCardStats } from "@/lib/cards/queue";
+import { defaultCardDictionarySlug } from "@/lib/cardDictionaryData";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -66,6 +67,22 @@ function DistributionBar({
   );
 }
 
+function buildLearnedByDay(items: Array<{ learnedAt: Date | null }>, now = new Date()) {
+  return Array.from({ length: 7 }, (_, index) => {
+    const day = new Date(now);
+    day.setDate(day.getDate() - (6 - index));
+    day.setHours(0, 0, 0, 0);
+    const nextDay = new Date(day);
+    nextDay.setDate(nextDay.getDate() + 1);
+    const count = items.filter((item) => item.learnedAt && item.learnedAt >= day && item.learnedAt < nextDay).length;
+
+    return {
+      label: new Intl.DateTimeFormat("ru-RU", { day: "2-digit", month: "short" }).format(day),
+      count
+    };
+  });
+}
+
 export default async function AnalyticsPage() {
   const user = await requireUser();
   const words = await prisma.word.findMany({
@@ -74,17 +91,23 @@ export default async function AnalyticsPage() {
   });
   const analytics = buildWordAnalytics(words);
   const totalAnswers = analytics.correctAnswers + analytics.wrongAnswers + analytics.typoAnswers;
-
-  if (analytics.totalWords === 0) {
-    return (
-      <EmptyState
-        title="Пока нет аналитики"
-        description="Добавьте первые слова и пройдите тренировку, чтобы увидеть прогресс, точность и сложные места."
-        actionLabel="Добавить слово"
-        actionHref="/words/new"
-      />
-    );
-  }
+  const cardDictionary = await prisma.dictionary.findFirst({
+    where: { OR: [{ isDefault: true }, { slug: defaultCardDictionarySlug }] },
+    include: {
+      words: true
+    }
+  });
+  const cardProgress = cardDictionary
+    ? await prisma.cardProgress.findMany({
+        where: {
+          userId: user.id,
+          word: { dictionaryId: cardDictionary.id }
+        }
+      })
+    : [];
+  const cardStats = cardDictionary ? buildCardStats(cardDictionary.words, cardProgress) : null;
+  const learnedByDay = buildLearnedByDay(cardProgress);
+  const maxLearnedByDay = Math.max(1, ...learnedByDay.map((item) => item.count));
 
   const metrics = [
     {
@@ -193,6 +216,58 @@ export default async function AnalyticsPage() {
           </div>
         </div>
       </section>
+
+      {cardStats ? (
+        <section className="panel p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Свайп-карточки</p>
+              <h3 className="mt-1 text-xl font-semibold text-white">Прогресс B2-словаря</h3>
+            </div>
+            <Link href="/cards">
+              <Button variant="secondary">Открыть карточки</Button>
+            </Link>
+          </div>
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <DistributionBar
+              label="Выучено"
+              value={cardStats.learned}
+              total={cardStats.total}
+              className="bg-emerald-400"
+            />
+            <DistributionBar
+              label="В ротации"
+              value={cardStats.rotation}
+              total={cardStats.total}
+              className="bg-sky-400"
+            />
+            <DistributionBar
+              label="Уже знал"
+              value={cardStats.known}
+              total={cardStats.total}
+              className="bg-violet-400"
+            />
+            <DistributionBar label="Осталось" value={cardStats.left} total={cardStats.total} className="bg-amber-400" />
+          </div>
+
+          <div className="mt-6">
+            <p className="text-sm font-medium text-white">Выучено по дням</p>
+            <div className="mt-4 flex h-40 items-end gap-2 rounded-lg border border-white/10 bg-white/[0.035] p-4">
+              {learnedByDay.map((item) => (
+                <div key={item.label} className="flex min-w-0 flex-1 flex-col items-center gap-2">
+                  <div
+                    className="w-full rounded-t-md bg-emerald-400"
+                    style={{ height: `${Math.max(4, (item.count / maxLearnedByDay) * 100)}%` }}
+                    title={`${item.label}: ${item.count}`}
+                  />
+                  <span className="w-full truncate text-center text-[10px] text-slate-500">{item.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       <section className="panel p-5">
         <div className="flex items-center justify-between gap-3">

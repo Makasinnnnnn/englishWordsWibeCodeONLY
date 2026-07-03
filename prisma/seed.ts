@@ -1,6 +1,9 @@
 import { pbkdf2Sync, randomBytes } from "crypto";
 import { PrismaClient } from "@prisma/client";
 
+import { confirmedB2CardSeedWords, defaultCardDictionary } from "../lib/cardDictionaryData";
+import { importOpenDslCardDictionary } from "../lib/cards/openDslImport";
+
 const prisma = new PrismaClient();
 
 function normalizeEnglishWord(word: string) {
@@ -93,6 +96,65 @@ async function main() {
       await prisma.word.update({
         where: { id: existing.id },
         data: { imageUrl: word.imageUrl }
+      });
+    }
+  }
+
+  const cardDictionary = await prisma.dictionary.upsert({
+    where: { slug: defaultCardDictionary.slug },
+    update: {
+      title: defaultCardDictionary.title,
+      description: defaultCardDictionary.description,
+      level: defaultCardDictionary.level,
+      sourceName: defaultCardDictionary.sourceName,
+      sourceUrl: defaultCardDictionary.sourceUrl,
+      isDefault: true
+    },
+    create: {
+      ...defaultCardDictionary,
+      isDefault: true
+    }
+  });
+
+  try {
+    const imported = await importOpenDslCardDictionary(prisma, cardDictionary.id, { limit: 2500 });
+    console.log(`Seeded ${imported} default card words from Open DSL/Wiktionary.`);
+  } catch (error) {
+    console.warn("Could not download Open DSL dictionary. Falling back to the bundled B2 sample.");
+
+    await prisma.dictionaryWord.deleteMany({
+      where: {
+        dictionaryId: cardDictionary.id,
+        englishNormalized: {
+          notIn: confirmedB2CardSeedWords.map((word) => normalizeEnglishWord(word.english))
+        }
+      }
+    });
+
+    for (const [index, word] of confirmedB2CardSeedWords.entries()) {
+      await prisma.dictionaryWord.upsert({
+        where: {
+          dictionaryId_englishNormalized: {
+            dictionaryId: cardDictionary.id,
+            englishNormalized: normalizeEnglishWord(word.english)
+          }
+        },
+        update: {
+          english: word.english,
+          transcription: word.transcription,
+          translation: word.translation,
+          exampleEn: word.exampleEn,
+          exampleRu: word.exampleRu,
+          source: defaultCardDictionary.sourceName,
+          position: index
+        },
+        create: {
+          ...word,
+          dictionaryId: cardDictionary.id,
+          englishNormalized: normalizeEnglishWord(word.english),
+          source: defaultCardDictionary.sourceName,
+          position: index
+        }
       });
     }
   }

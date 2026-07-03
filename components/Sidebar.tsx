@@ -2,15 +2,30 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, BookOpen, Dumbbell, LineChart, PlusCircle, Settings, Sparkles, UserCircle } from "lucide-react";
+import {
+  BarChart3,
+  BookOpen,
+  Dumbbell,
+  GalleryHorizontal,
+  LibraryBig,
+  LineChart,
+  Newspaper,
+  PlusCircle,
+  Settings,
+  Sparkles,
+  UserCircle
+} from "lucide-react";
 
 import type { AuthUser } from "@/lib/auth";
 import { cn } from "@/utils/cn";
 
 const navigation = [
   { href: "/", label: "Главная", icon: BarChart3 },
-  { href: "/words", label: "Словарь", icon: BookOpen },
-  { href: "/words/new", label: "Добавить", icon: PlusCircle },
+  { href: "/words", label: "Мои слова", icon: BookOpen },
+  { href: "/cards/dictionary", label: "Словарь карточек", icon: LibraryBig },
+  { href: "/cards", label: "Карточки", icon: GalleryHorizontal },
+  { href: "/daily", label: "Контент дня", icon: Newspaper },
+  { href: "/words/new", label: "Добавить своё", icon: PlusCircle },
   { href: "/training", label: "Тренировка", icon: Dumbbell },
   { href: "/analytics", label: "Аналитика", icon: LineChart },
   { href: "/settings", label: "Настройки", icon: Settings },

@@ -82,7 +82,7 @@ export function WordForm({ initialWord }: WordFormProps) {
           if (force || !translationTouched) {
             setForm((current) => ({ ...current, translation: data.translation }));
           }
-          setTranslationMessage("Предложен mock-перевод");
+          setTranslationMessage(data.message || "Перевод предложен");
         } else {
           setTranslationMessage(data.message || "Введите перевод вручную");
         }
@@ -189,7 +189,7 @@ export function WordForm({ initialWord }: WordFormProps) {
               setTranslationTouched(true);
             }}
             placeholder="Введите перевод вручную"
-            hint={translationLoading ? "Ищу mock-перевод..." : translationMessage || undefined}
+            hint={translationLoading ? "Ищу перевод..." : translationMessage || undefined}
             error={errors.translation}
             required
           />

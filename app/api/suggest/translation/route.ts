@@ -3,9 +3,9 @@ import { ZodError } from "zod";
 
 import { apiError, validationError } from "@/lib/apiResponse";
 import { getCurrentUser } from "@/lib/auth";
-import { suggestTranslation } from "@/lib/mockSuggestions";
 import { checkRateLimit, getClientIp, makeRateLimitKey } from "@/lib/rate-limit";
 import { suggestionQuerySchema } from "@/lib/schemas";
+import { suggestTranslationWithProvider } from "@/lib/translation";
 
 export const dynamic = "force-dynamic";
 
@@ -34,11 +34,12 @@ export async function GET(request: NextRequest) {
     const { word } = suggestionQuerySchema.parse({
       word: request.nextUrl.searchParams.get("word") ?? ""
     });
-    const translation = suggestTranslation(word);
+    const suggestion = await suggestTranslationWithProvider(word);
 
     return NextResponse.json({
-      translation,
-      message: translation ? "Mock translation found" : "Введите перевод вручную"
+      translation: suggestion.translation,
+      provider: suggestion.provider,
+      message: suggestion.message
     });
   } catch (error) {
     if (error instanceof ZodError) {

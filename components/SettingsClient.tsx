@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Download, RotateCcw, Upload } from "lucide-react";
+import { Download, GalleryHorizontal, RotateCcw, Upload } from "lucide-react";
 
 import { Button } from "@/components/Button";
+import { Select } from "@/components/Select";
 import { TrainingSidebar } from "@/components/TrainingSidebar";
 import {
   defaultTrainingSettings,
@@ -12,10 +13,23 @@ import {
   type TrainingSettings
 } from "@/lib/trainingSettings";
 
-export function SettingsClient() {
+type CardDictionaryOption = {
+  id: string;
+  slug: string;
+  title: string;
+  level: string | null;
+  isDefault: boolean;
+  _count: {
+    words: number;
+  };
+};
+
+export function SettingsClient({ cardDictionaries = [] }: { cardDictionaries?: CardDictionaryOption[] }) {
   const [settings, setSettings] = useState<TrainingSettings>(defaultTrainingSettings);
   const [loaded, setLoaded] = useState(false);
   const [importStatus, setImportStatus] = useState<string | null>(null);
+  const [cardResetStatus, setCardResetStatus] = useState<string | null>(null);
+  const [selectedDictionaryId, setSelectedDictionaryId] = useState(() => cardDictionaries[0]?.id ?? "");
 
   useEffect(() => {
     const raw = window.localStorage.getItem(trainingSettingsStorageKey);
@@ -59,6 +73,29 @@ export function SettingsClient() {
     setImportStatus(
       `Imported ${data.data.created} words, skipped ${data.data.skipped}. ${data.data.errors.length} rows need attention.`
     );
+  }
+
+  async function resetCardProgress(scope: "selected" | "all") {
+    if (
+      !window.confirm(
+        scope === "selected" ? "Сбросить прогресс выбранного словаря карточек?" : "Сбросить весь прогресс карточек?"
+      )
+    ) {
+      return;
+    }
+
+    setCardResetStatus("Сбрасываю прогресс карточек...");
+    const query =
+      scope === "selected" && selectedDictionaryId ? `?dictionaryId=${encodeURIComponent(selectedDictionaryId)}` : "";
+    const response = await fetch(`/api/cards/progress${query}`, { method: "DELETE" });
+    const data = (await response.json()) as { deleted?: number; error?: string };
+
+    if (!response.ok) {
+      setCardResetStatus(data.error ?? "Не удалось сбросить прогресс карточек");
+      return;
+    }
+
+    setCardResetStatus(`Прогресс карточек сброшен. Записей удалено: ${data.deleted ?? 0}.`);
   }
 
   return (
@@ -120,6 +157,51 @@ export function SettingsClient() {
             </label>
           </div>
           {importStatus ? <p className="mt-3 text-sm text-slate-400">{importStatus}</p> : null}
+        </div>
+
+        <div className="mt-5 rounded-lg border border-white/10 bg-white/[0.035] p-4">
+          <p className="text-sm font-medium text-white">Словарь карточек</p>
+          <p className="mt-2 text-sm leading-6 text-slate-400">
+            Дефолтная B2-колода используется только во вкладке “Карточки” и не смешивается с личным словарём.
+          </p>
+          <div className="mt-4 max-w-md">
+            <Select
+              label="Выбор словаря"
+              value={selectedDictionaryId}
+              onChange={(event) => setSelectedDictionaryId(event.target.value)}
+            >
+              {cardDictionaries.map((dictionary) => (
+                <option key={dictionary.id} value={dictionary.id}>
+                  {dictionary.title} · {dictionary.level ?? "level"} · {dictionary._count.words} слов
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-3">
+            <a href="/cards">
+              <Button type="button" variant="secondary" icon={<GalleryHorizontal className="h-4 w-4" />}>
+                Открыть карточки
+              </Button>
+            </a>
+            <Button
+              type="button"
+              variant="warning"
+              icon={<RotateCcw className="h-4 w-4" />}
+              onClick={() => void resetCardProgress("selected")}
+              disabled={!selectedDictionaryId}
+            >
+              Сбросить выбранный словарь
+            </Button>
+            <Button
+              type="button"
+              variant="danger"
+              icon={<RotateCcw className="h-4 w-4" />}
+              onClick={() => void resetCardProgress("all")}
+            >
+              Сбросить все карточки
+            </Button>
+          </div>
+          {cardResetStatus ? <p className="mt-3 text-sm text-slate-400">{cardResetStatus}</p> : null}
         </div>
       </section>
     </div>

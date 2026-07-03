@@ -5,9 +5,11 @@ const sessionCookieName = "word_trainer_session";
 const privatePrefixes = [
   "/words",
   "/training",
+  "/cards",
   "/analytics",
   "/settings",
   "/api/words",
+  "/api/cards",
   "/api/import",
   "/api/export",
   "/api/account",

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Dumbbell, PlusCircle } from "lucide-react";
+import { Dumbbell, GalleryHorizontal, Newspaper, PlusCircle } from "lucide-react";
 
 import { Button } from "@/components/Button";
 import { EmptyState } from "@/components/EmptyState";
@@ -49,6 +49,11 @@ export default async function DashboardPage() {
               <Link href="/training">
                 <Button variant="secondary" size="lg" icon={<Dumbbell className="h-5 w-5" />}>
                   Начать тренировку
+                </Button>
+              </Link>
+              <Link href="/cards">
+                <Button variant="secondary" size="lg" icon={<GalleryHorizontal className="h-5 w-5" />}>
+                  Свайп-карточки
                 </Button>
               </Link>
             </div>
@@ -119,6 +124,11 @@ export default async function DashboardPage() {
             <Link href="/settings">
               <Button variant="secondary" className="w-full justify-start">
                 Настроить подсказки
+              </Button>
+            </Link>
+            <Link href="/daily">
+              <Button variant="secondary" className="w-full justify-start" icon={<Newspaper className="h-4 w-4" />}>
+                Контент дня
               </Button>
             </Link>
           </div>

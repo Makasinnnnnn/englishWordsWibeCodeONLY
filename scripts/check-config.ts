@@ -128,6 +128,14 @@ async function main() {
       detail: features.emailVerificationEmail === "smtp" ? "SMTP enabled" : "dev console fallback"
     },
     {
+      label: "Translation suggestions",
+      status: features.translationSuggestions === "mock" ? "warn" : "ok",
+      detail:
+        features.translationSuggestions === "mock"
+          ? "local mock fallback"
+          : `${features.translationSuggestions} API enabled`
+    },
+    {
       label: "CSV import/export",
       status: "ok",
       detail: features.csvImportExport ? "enabled" : "disabled"

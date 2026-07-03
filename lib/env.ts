@@ -33,7 +33,10 @@ const envSchema = z.object({
   SMTP_PORT: optionalPositiveInteger,
   SMTP_USER: optionalNonEmptyString,
   SMTP_PASSWORD: optionalNonEmptyString,
-  SMTP_FROM: optionalNonEmptyString
+  SMTP_FROM: optionalNonEmptyString,
+  YANDEX_TRANSLATE_API_KEY: optionalNonEmptyString,
+  YANDEX_TRANSLATE_FOLDER_ID: optionalNonEmptyString,
+  GOOGLE_TRANSLATE_API_KEY: optionalNonEmptyString
 });
 
 export type AppEnv = z.infer<typeof envSchema>;
@@ -43,6 +46,7 @@ export type FeatureStatus = {
   passwordResetEmail: "smtp" | "dev-console";
   emailVerificationEmail: "smtp" | "dev-console";
   telegramLogin: boolean;
+  translationSuggestions: "yandex" | "google" | "mock";
   csvImportExport: boolean;
   learningDashboard: boolean;
 };
@@ -65,6 +69,8 @@ export function getEnvWarnings(env: AppEnv, options: { production?: boolean } = 
   const telegramConfigured = Boolean(env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_BOT_USERNAME);
   const smtpFields = [env.SMTP_HOST, env.SMTP_PORT, env.SMTP_FROM];
   const smtpConfigured = smtpFields.every(Boolean);
+  const yandexTranslatePartiallyConfigured =
+    Boolean(env.YANDEX_TRANSLATE_API_KEY) !== Boolean(env.YANDEX_TRANSLATE_FOLDER_ID);
   const smtpPartiallyConfigured = smtpFields.some(Boolean) && !smtpConfigured;
 
   if (telegramPartiallyConfigured) {
@@ -87,6 +93,10 @@ export function getEnvWarnings(env: AppEnv, options: { production?: boolean } = 
     warnings.push(
       "SMTP is not configured. Password reset and email verification links will be printed to the server console in dev mode."
     );
+  }
+
+  if (yandexTranslatePartiallyConfigured) {
+    warnings.push("Yandex Translate needs both YANDEX_TRANSLATE_API_KEY and YANDEX_TRANSLATE_FOLDER_ID.");
   }
 
   if (options.production) {
@@ -126,6 +136,12 @@ export function getFeatureStatus(env: AppEnv): FeatureStatus {
     passwordResetEmail: smtpConfigured ? "smtp" : "dev-console",
     emailVerificationEmail: smtpConfigured ? "smtp" : "dev-console",
     telegramLogin: Boolean(env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_BOT_USERNAME),
+    translationSuggestions:
+      env.YANDEX_TRANSLATE_API_KEY && env.YANDEX_TRANSLATE_FOLDER_ID
+        ? "yandex"
+        : env.GOOGLE_TRANSLATE_API_KEY
+          ? "google"
+          : "mock",
     csvImportExport: true,
     learningDashboard: true
   };

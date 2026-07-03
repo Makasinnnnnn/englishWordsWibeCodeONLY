@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, BookOpen, Dumbbell, Settings } from "lucide-react";
+import { BarChart3, BookOpen, GalleryHorizontal, Settings } from "lucide-react";
 
 import { cn } from "@/utils/cn";
 
 const mobileNavigation = [
-  { href: "/words", label: "Словарь", icon: BookOpen },
-  { href: "/training", label: "Тренировка", icon: Dumbbell },
+  { href: "/words", label: "Мои слова", icon: BookOpen },
+  { href: "/cards", label: "Карточки", icon: GalleryHorizontal },
   { href: "/analytics", label: "Аналитика", icon: BarChart3 },
   { href: "/settings", label: "Настройки", icon: Settings }
 ];

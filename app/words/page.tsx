@@ -1,3 +1,6 @@
+import Link from "next/link";
+
+import { Button } from "@/components/Button";
 import { EmptyState } from "@/components/EmptyState";
 import { WordListClient } from "@/components/WordListClient";
 import { requireUser } from "@/lib/auth";
@@ -18,9 +21,9 @@ export default async function WordsPage() {
   if (words.length === 0) {
     return (
       <EmptyState
-        title="Словарь пуст"
-        description="Словарь пуст. Добавьте первое слово."
-        actionLabel="Добавить слово"
+        title="Личный словарь пуст"
+        description="Эта вкладка только для ваших собственных слов и старого режима тренировки. Дефолтная колода карточек редактируется отдельно."
+        actionLabel="Добавить своё слово"
         actionHref="/words/new"
       />
     );
@@ -28,11 +31,20 @@ export default async function WordsPage() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-end justify-between gap-4">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-sm text-slate-500">Всего слов: {words.length}</p>
-          <h2 className="mt-1 text-2xl font-semibold text-white">Личный словарь</h2>
+          <p className="text-sm text-slate-500">Всего личных слов: {words.length}</p>
+          <h2 className="mt-1 text-2xl font-semibold text-white">Мои слова</h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+            Этот словарь используется в режимах тренировки личных слов. Свайп-карточки используют отдельную дефолтную
+            колоду.
+          </p>
         </div>
+        <Link href="/cards/dictionary">
+          <Button type="button" variant="secondary">
+            Открыть словарь карточек
+          </Button>
+        </Link>
       </div>
 
       <WordListClient words={words} />

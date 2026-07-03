@@ -45,6 +45,11 @@ export async function POST(request: NextRequest) {
       return authValidationError(error);
     }
 
+    if (error instanceof SyntaxError) {
+      return authError("VALIDATION_ERROR", "Некорректный JSON", 400);
+    }
+
+    console.error("Login failed", error);
     return authError("INTERNAL_ERROR", "Не удалось войти", 500);
   }
 }
