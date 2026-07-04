@@ -70,6 +70,16 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
         reviewCount: action === "remembered" || action === "forgot" ? { increment: 1 } : undefined
       }
     });
+    await prisma.cardReviewEvent.create({
+      data: {
+        userId: user.id,
+        dictionaryWordId: params.id,
+        cardProgressId: progress.id,
+        action,
+        statusBefore: currentProgress?.status ?? null,
+        statusAfter: progress.status
+      }
+    });
 
     return NextResponse.json({ ok: true, progress: serializeCardProgress(progress) });
   } catch (error) {

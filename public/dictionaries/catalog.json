@@ -1,0 +1,20 @@
+[
+  {
+    "slug": "cefr-j-b2-card-deck",
+    "title": "B2 Card Deck",
+    "level": "B2",
+    "version": 2,
+    "wordsCount": 12,
+    "url": "/dictionaries/cefr-j-b2-card-deck.json",
+    "updatedAt": "2026-07-03"
+  },
+  {
+    "slug": "travel-starter",
+    "title": "Travel Starter",
+    "level": "A2",
+    "version": 1,
+    "wordsCount": 10,
+    "url": "/dictionaries/travel-starter.json",
+    "updatedAt": "2026-07-03"
+  }
+]

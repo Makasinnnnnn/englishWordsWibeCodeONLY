@@ -22,6 +22,7 @@ const envSchema = z.object({
   DATABASE_URL: z.string().trim().min(1, "DATABASE_URL is required"),
   APP_URL: z.string().trim().url("APP_URL must be a valid URL").default("http://localhost:3000"),
   NEXT_PUBLIC_APP_URL: z.string().trim().url("NEXT_PUBLIC_APP_URL must be a valid URL").optional(),
+  ADMIN_PASSWORD: optionalNonEmptyString,
   SESSION_SECRET: optionalNonEmptyString,
   SESSION_TTL_DAYS: optionalPositiveInteger.default(30),
   PASSWORD_RESET_TOKEN_TTL_MINUTES: optionalPositiveInteger.default(30),
@@ -34,9 +35,11 @@ const envSchema = z.object({
   SMTP_USER: optionalNonEmptyString,
   SMTP_PASSWORD: optionalNonEmptyString,
   SMTP_FROM: optionalNonEmptyString,
+  TRANSLATE_PROVIDER: z.enum(["yandex", "google", "auto"]).default("auto"),
   YANDEX_TRANSLATE_API_KEY: optionalNonEmptyString,
   YANDEX_TRANSLATE_FOLDER_ID: optionalNonEmptyString,
-  GOOGLE_TRANSLATE_API_KEY: optionalNonEmptyString
+  GOOGLE_TRANSLATE_API_KEY: optionalNonEmptyString,
+  YOUTUBE_API_KEY: optionalNonEmptyString
 });
 
 export type AppEnv = z.infer<typeof envSchema>;

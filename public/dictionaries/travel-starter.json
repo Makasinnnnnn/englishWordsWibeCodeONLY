@@ -1,0 +1,79 @@
+{
+  "slug": "travel-starter",
+  "title": "Travel Starter",
+  "description": "Short A2 travel vocabulary for checking dictionary switching.",
+  "level": "A2",
+  "version": 1,
+  "words": [
+    {
+      "english": "boarding pass",
+      "transcription": "/ˈbɔːrdɪŋ pæs/",
+      "translation": "посадочный талон",
+      "exampleEn": "Please show your boarding pass at the gate.",
+      "exampleRu": "Пожалуйста, покажите посадочный талон у выхода."
+    },
+    {
+      "english": "delay",
+      "transcription": "/dɪˈleɪ/",
+      "translation": "задержка",
+      "exampleEn": "The flight has a short delay.",
+      "exampleRu": "Рейс немного задерживается."
+    },
+    {
+      "english": "luggage",
+      "transcription": "/ˈlʌɡɪdʒ/",
+      "translation": "багаж",
+      "exampleEn": "My luggage is still at the airport.",
+      "exampleRu": "Мой багаж всё ещё в аэропорту."
+    },
+    {
+      "english": "reservation",
+      "transcription": "/ˌrezərˈveɪʃən/",
+      "translation": "бронирование",
+      "exampleEn": "I have a reservation for two nights.",
+      "exampleRu": "У меня бронирование на две ночи."
+    },
+    {
+      "english": "receipt",
+      "transcription": "/rɪˈsiːt/",
+      "translation": "чек; квитанция",
+      "exampleEn": "Could I have a receipt, please?",
+      "exampleRu": "Можно мне чек, пожалуйста?"
+    },
+    {
+      "english": "platform",
+      "transcription": "/ˈplætfɔːrm/",
+      "translation": "платформа",
+      "exampleEn": "The train leaves from platform five.",
+      "exampleRu": "Поезд отправляется с пятой платформы."
+    },
+    {
+      "english": "entrance",
+      "transcription": "/ˈentrəns/",
+      "translation": "вход",
+      "exampleEn": "The museum entrance is on the left.",
+      "exampleRu": "Вход в музей находится слева."
+    },
+    {
+      "english": "currency",
+      "transcription": "/ˈkɜːrənsi/",
+      "translation": "валюта",
+      "exampleEn": "What currency do you use here?",
+      "exampleRu": "Какая валюта здесь используется?"
+    },
+    {
+      "english": "departure",
+      "transcription": "/dɪˈpɑːrtʃər/",
+      "translation": "отправление",
+      "exampleEn": "Check the departure time on the screen.",
+      "exampleRu": "Проверьте время отправления на экране."
+    },
+    {
+      "english": "single ticket",
+      "transcription": "/ˈsɪŋɡəl ˈtɪkɪt/",
+      "translation": "билет в одну сторону",
+      "exampleEn": "I need a single ticket to the city center.",
+      "exampleRu": "Мне нужен билет в одну сторону до центра города."
+    }
+  ]
+}

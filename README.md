@@ -1,6 +1,6 @@
 # Word Memory Trainer
 
-Word Memory Trainer is a free vocabulary learning app for students. It helps create a personal English dictionary, practice translations, use associations and images, repeat difficult words, and track learning progress.
+Word Memory Trainer is a free Web/PWA vocabulary learning app for students. The default screen is the swipe-card training workspace, so a user can open the app and start learning immediately.
 
 ## Why This Project Exists
 
@@ -25,6 +25,14 @@ The app is designed as a free tool for classmates who want to prepare for Englis
 - Typo detection with Levenshtein distance, answer variants, punctuation normalization, and short-answer safeguards.
 - Review scheduling with level, streak, correct, wrong, typo, and next review fields.
 - Analytics page with accuracy, due words, weekly activity, and hardest words.
+- Swipe-card dictionary training as the main app screen.
+- Active card dictionary selection stored per user.
+- Local dictionary catalog with download/update/select/reset controls.
+- Dictionary updates preserve progress for matching words and archive removed words.
+- Server-side card translation/example API with Yandex, Google, and fallback modes.
+- Analytics dashboard for the active dictionary with instant statistics and period filters: today, 7 days, 30 days, 90 days, and all time.
+- Daily content page with text, translation, source, and video subtitle status.
+- Minimal `/admin/daily` panel for manually managing content of the day.
 - CSV import/export from settings.
 - Authenticated translation and image suggestion endpoints for word creation.
 - Light, dark, and system theme switching.
@@ -64,6 +72,7 @@ npm run db:generate
 npm run db:migrate
 npm run seed
 npm run dev
+npm run build
 ```
 
 On Windows PowerShell:
@@ -92,6 +101,7 @@ DATABASE_URL="file:./dev.db"
 APP_URL="https://uchi-slovo.ru"
 NEXT_PUBLIC_APP_URL="https://uchi-slovo.ru"
 SESSION_SECRET="change-me-in-production"
+ADMIN_PASSWORD=""
 SESSION_TTL_DAYS="30"
 EMAIL_VERIFICATION_TOKEN_TTL_MINUTES="1440"
 
@@ -106,7 +116,15 @@ SMTP_PASSWORD=""
 SMTP_FROM=""
 
 PASSWORD_RESET_TOKEN_TTL_MINUTES="30"
+
+TRANSLATE_PROVIDER="auto"
+YANDEX_TRANSLATE_API_KEY=""
+YANDEX_TRANSLATE_FOLDER_ID=""
+GOOGLE_TRANSLATE_API_KEY=""
+YOUTUBE_API_KEY=""
 ```
+
+`TRANSLATE_PROVIDER` can be `auto`, `yandex`, or `google`. Without translation keys the app returns a safe fallback response and keeps the UI usable. `YOUTUBE_API_KEY` is optional; when it is absent, daily videos are selected from trusted learning channels and marked as likely to have English subtitles.
 
 ## Database
 
@@ -155,6 +173,8 @@ app/                  Next.js pages and API routes
 components/           Reusable UI, auth, word, and training components
 lib/auth/             Password, session, Telegram, and reset-token helpers
 lib/analytics/        Word analytics calculations
+lib/dictionaries/     Active dictionary and catalog sync helpers
+lib/translate/        Server-side card translation providers
 lib/training/         Review scheduling logic
 lib/validation/       Zod schemas
 lib/email/            Mailer abstraction
@@ -218,6 +238,32 @@ The app includes:
 - PWA icons in `public/icons`;
 - a small service worker that caches static assets and the offline fallback, but does not cache `/api/*`;
 - an install prompt with iOS instructions.
+
+## Card Dictionaries
+
+The card trainer uses `Dictionary`, `DictionaryWord`, and `CardProgress` models. Each user has an active dictionary. If the selected dictionary is missing, the app falls back to the default B2 dictionary and stores it as active.
+
+Settings include a dictionary catalog loaded from `public/dictionaries/catalog.json`. A dictionary can be downloaded, updated, selected as active, or reset. Updates match words by normalized English key, keep existing `CardProgress`, add new words, and mark removed words as archived instead of deleting them.
+
+## Card Translation API
+
+Cards can request examples through `POST /api/cards/translate`. The route accepts `word`, optional `wordId`, `sourceLang`, `targetLang`, and context. API keys stay server-side. Provider order is controlled by `TRANSLATE_PROVIDER`; without keys the route returns fallback content instead of failing.
+
+## Analytics
+
+`/analytics` shows momentary statistics for the active dictionary: total words, learned, rotation, known, left, due now, reviewed today, learned today, and progress percent. Period buttons recalculate reviews, new words moved into rotation, learned words, activity, and charts by day.
+
+Card actions create `CardReviewEvent` rows, so period charts are based on real user activity rather than a single updated timestamp.
+
+## Daily Content
+
+`/daily` first reads active manual content from the database. If none exists, it uses the parser/fallback. Videos are selected only when English subtitles are confirmed or likely. The UI shows one of:
+
+- Английские субтитры подтверждены
+- Субтитры вероятно доступны
+- Субтитры не подтверждены
+
+`/admin/daily` is a small admin page for creating or editing the content of the day. It supports English text, Russian translation, sources, video fields, subtitle status, publication date, and active state. Set `ADMIN_PASSWORD` to protect it with a simple password form; without it, authenticated local development users can open it.
 
 On iOS, open the site in Safari, tap Share, then choose "Add to Home Screen".
 

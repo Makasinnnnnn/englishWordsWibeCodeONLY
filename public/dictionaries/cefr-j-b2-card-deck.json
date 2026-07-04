@@ -1,0 +1,93 @@
+{
+  "slug": "cefr-j-b2-card-deck",
+  "title": "B2 Card Deck",
+  "description": "A compact B2 vocabulary pack for swipe training.",
+  "level": "B2",
+  "version": 2,
+  "words": [
+    {
+      "english": "achieve",
+      "transcription": "/əˈtʃiːv/",
+      "translation": "достигать",
+      "exampleEn": "She worked hard to achieve her goal.",
+      "exampleRu": "Она усердно работала, чтобы достичь своей цели."
+    },
+    {
+      "english": "benefit",
+      "transcription": "/ˈbenɪfɪt/",
+      "translation": "польза; преимущество",
+      "exampleEn": "Regular practice has a clear benefit.",
+      "exampleRu": "Регулярная практика имеет очевидную пользу."
+    },
+    {
+      "english": "capacity",
+      "transcription": "/kəˈpæsəti/",
+      "translation": "способность; вместимость",
+      "exampleEn": "The app has the capacity to store many dictionaries.",
+      "exampleRu": "Приложение способно хранить много словарей."
+    },
+    {
+      "english": "challenge",
+      "transcription": "/ˈtʃælɪndʒ/",
+      "translation": "вызов; сложная задача",
+      "exampleEn": "Speaking without notes was a real challenge.",
+      "exampleRu": "Говорить без заметок было настоящим вызовом."
+    },
+    {
+      "english": "consistent",
+      "transcription": "/kənˈsɪstənt/",
+      "translation": "последовательный; стабильный",
+      "exampleEn": "Consistent study is better than rare long sessions.",
+      "exampleRu": "Стабильная учёба лучше редких длинных занятий."
+    },
+    {
+      "english": "contribute",
+      "transcription": "/kənˈtrɪbjuːt/",
+      "translation": "вносить вклад",
+      "exampleEn": "Everyone can contribute to the discussion.",
+      "exampleRu": "Каждый может внести вклад в обсуждение."
+    },
+    {
+      "english": "efficient",
+      "transcription": "/ɪˈfɪʃənt/",
+      "translation": "эффективный",
+      "exampleEn": "Swipe cards are an efficient way to review vocabulary.",
+      "exampleRu": "Свайп-карточки - эффективный способ повторять лексику."
+    },
+    {
+      "english": "evidence",
+      "transcription": "/ˈevɪdəns/",
+      "translation": "доказательство",
+      "exampleEn": "There is strong evidence for this method.",
+      "exampleRu": "Есть убедительные доказательства в пользу этого метода."
+    },
+    {
+      "english": "expand",
+      "transcription": "/ɪkˈspænd/",
+      "translation": "расширять",
+      "exampleEn": "Reading helps expand your vocabulary.",
+      "exampleRu": "Чтение помогает расширять словарный запас."
+    },
+    {
+      "english": "feature",
+      "transcription": "/ˈfiːtʃər/",
+      "translation": "функция; особенность",
+      "exampleEn": "The new feature makes practice faster.",
+      "exampleRu": "Новая функция делает практику быстрее."
+    },
+    {
+      "english": "impact",
+      "transcription": "/ˈɪmpækt/",
+      "translation": "влияние",
+      "exampleEn": "Small daily habits can have a big impact.",
+      "exampleRu": "Маленькие ежедневные привычки могут сильно повлиять."
+    },
+    {
+      "english": "maintain",
+      "transcription": "/meɪnˈteɪn/",
+      "translation": "поддерживать",
+      "exampleEn": "It is important to maintain a regular study rhythm.",
+      "exampleRu": "Важно поддерживать регулярный ритм занятий."
+    }
+  ]
+}

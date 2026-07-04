@@ -5,17 +5,24 @@ import {
 } from "@/components/CardDictionaryClient";
 import { EmptyState } from "@/components/EmptyState";
 import { requireUser } from "@/lib/auth";
-import { defaultCardDictionarySlug } from "@/lib/cardDictionaryData";
+import { getActiveDictionaryForUser } from "@/lib/dictionaries/active";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
 export default async function CardDictionaryPage() {
   const user = await requireUser();
-  const dictionary = await prisma.dictionary.findFirst({
-    where: { OR: [{ isDefault: true }, { slug: defaultCardDictionarySlug }] },
+  const activeDictionary = await getActiveDictionaryForUser(user.id);
+
+  if (!activeDictionary) {
+    return <EmptyState title="Словарь карточек не найден" description="Скачайте словарь в настройках." />;
+  }
+
+  const dictionary = await prisma.dictionary.findUnique({
+    where: { id: activeDictionary.id },
     include: {
       words: {
+        where: { archived: false },
         orderBy: [{ position: "asc" }, { english: "asc" }],
         include: {
           progress: {
@@ -38,7 +45,7 @@ export default async function CardDictionaryPage() {
   });
 
   if (!dictionary) {
-    return <EmptyState title="Словарь карточек не найден" description="Запустите seed, чтобы добавить B2-словарь." />;
+    return <EmptyState title="Словарь карточек не найден" description="Выберите или скачайте словарь в настройках." />;
   }
 
   const words: CardDictionaryWordItem[] = dictionary.words.map((word) => ({

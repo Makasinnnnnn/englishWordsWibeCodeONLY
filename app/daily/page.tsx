@@ -10,6 +10,12 @@ export const dynamic = "force-dynamic";
 export default async function DailyPage() {
   await requireUser();
   const dailyContent = await getDailyContent();
+  const subtitlesLabel =
+    dailyContent.subtitlesStatus === "confirmed"
+      ? "Английские субтитры подтверждены"
+      : dailyContent.subtitlesStatus === "likely"
+        ? "Субтитры вероятно доступны"
+        : "Субтитры не подтверждены";
 
   return (
     <div className="space-y-5">
@@ -18,7 +24,9 @@ export default async function DailyPage() {
           <div>
             <p className="text-xs uppercase tracking-[0.16em] text-sky-200/80">Контент дня</p>
             <h2 className="mt-1 text-2xl font-semibold text-white">{dailyContent.title}</h2>
-            <p className="mt-2 text-sm text-slate-500">Источник: {dailyContent.source}</p>
+            <p className="mt-2 text-sm text-slate-500">
+              Источник: {dailyContent.source} · {dailyContent.isManual ? "ручное управление" : "автоматический подбор"}
+            </p>
           </div>
           <Link href="/cards">
             <Button variant="secondary" icon={<GalleryHorizontal className="h-4 w-4" />}>
@@ -42,6 +50,9 @@ export default async function DailyPage() {
           <div className="border-b border-white/10 px-5 py-4">
             <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Видео на английском</p>
             <h3 className="mt-1 text-lg font-semibold text-white">{dailyContent.videoTitle}</h3>
+            <p className="mt-2 text-sm text-slate-500">
+              Источник: {dailyContent.videoSource} · {subtitlesLabel}
+            </p>
           </div>
           <div className="aspect-video bg-black">
             <iframe

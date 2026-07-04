@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  BarChart3,
   BookOpen,
   Dumbbell,
   GalleryHorizontal,
@@ -20,10 +19,9 @@ import type { AuthUser } from "@/lib/auth";
 import { cn } from "@/utils/cn";
 
 const navigation = [
-  { href: "/", label: "Главная", icon: BarChart3 },
+  { href: "/cards", label: "Карточки", icon: GalleryHorizontal },
   { href: "/words", label: "Мои слова", icon: BookOpen },
   { href: "/cards/dictionary", label: "Словарь карточек", icon: LibraryBig },
-  { href: "/cards", label: "Карточки", icon: GalleryHorizontal },
   { href: "/daily", label: "Контент дня", icon: Newspaper },
   { href: "/words/new", label: "Добавить своё", icon: PlusCircle },
   { href: "/training", label: "Тренировка", icon: Dumbbell },
@@ -41,7 +39,7 @@ export function Sidebar({ user }: { user: AuthUser | null }) {
 
   return (
     <aside className="sticky top-0 hidden h-screen w-72 shrink-0 border-r border-white/10 bg-graphite-950/85 px-4 py-5 backdrop-blur lg:block">
-      <Link href="/" className="mb-8 flex items-center gap-3 rounded-lg px-2">
+      <Link href="/cards" className="mb-8 flex items-center gap-3 rounded-lg px-2">
         <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-sky-400 text-graphite-950">
           <Sparkles className="h-6 w-6" />
         </div>
@@ -55,7 +53,7 @@ export function Sidebar({ user }: { user: AuthUser | null }) {
         {navigation.map((item) => {
           const Icon = item.icon;
           const isActive =
-            item.href === "/" || item.href === "/settings" ? pathname === item.href : pathname.startsWith(item.href);
+            item.href === "/settings" || item.href === "/cards" ? pathname === item.href : pathname.startsWith(item.href);
 
           return (
             <Link

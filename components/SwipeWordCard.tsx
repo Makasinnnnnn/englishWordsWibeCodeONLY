@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type PointerEvent } from "react";
-import { ArrowLeft, ArrowRight, CheckCircle2, Eye, RotateCcw, XCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Eye, Loader2, MessageSquareText, RotateCcw, XCircle } from "lucide-react";
 
 import { Button } from "@/components/Button";
 import type { CardQueueItemView } from "@/lib/cards/serializer";
@@ -19,6 +19,13 @@ type SwipeWordCardProps = {
 const swipeThreshold = 96;
 const interactiveSelector = "button,a,input,select,textarea,label,[role='button']";
 
+type CardExampleState = {
+  en: string;
+  ru?: string;
+  source?: string;
+  provider?: string;
+};
+
 function formatStage(stage: number) {
   if (stage >= totalCardReviewStages) {
     return "финал";
@@ -31,12 +38,18 @@ export function SwipeWordCard({ item, busy = false, onAction }: SwipeWordCardPro
   const [revealed, setRevealed] = useState(false);
   const [dragStartX, setDragStartX] = useState<number | null>(null);
   const [dragX, setDragX] = useState(0);
+  const [example, setExample] = useState<CardExampleState | null>(null);
+  const [exampleLoading, setExampleLoading] = useState(false);
+  const [exampleError, setExampleError] = useState<string | null>(null);
 
   useEffect(() => {
     setRevealed(false);
     setDragStartX(null);
     setDragX(0);
-  }, [item.word.id, item.cardType, item.direction]);
+    setExample(item.word.exampleEn ? { en: item.word.exampleEn, ru: item.word.exampleRu ?? undefined } : null);
+    setExampleLoading(false);
+    setExampleError(null);
+  }, [item.word.id, item.word.exampleEn, item.word.exampleRu, item.cardType, item.direction]);
 
   const actions = useMemo(() => {
     if (item.cardType === "new") {
@@ -103,6 +116,50 @@ export function SwipeWordCard({ item, busy = false, onAction }: SwipeWordCardPro
 
     setDragStartX(null);
     setDragX(0);
+  }
+
+  async function loadExample() {
+    if (exampleLoading) {
+      return;
+    }
+
+    setExampleLoading(true);
+    setExampleError(null);
+
+    try {
+      const response = await fetch("/api/cards/translate", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          wordId: item.word.id,
+          word: item.word.english,
+          context: item.word.exampleEn ?? undefined,
+          sourceLang: "en",
+          targetLang: "ru"
+        })
+      });
+      const data = (await response.json()) as {
+        translation?: string | null;
+        examples?: Array<{ en: string; ru?: string; source?: string }>;
+        provider?: string;
+        error?: string;
+      };
+
+      if (!response.ok) {
+        throw new Error(data.error ?? "Пример пока недоступен");
+      }
+
+      const nextExample = data.examples?.[0];
+      if (!nextExample) {
+        throw new Error("Пример пока недоступен");
+      }
+
+      setExample({ ...nextExample, provider: data.provider });
+    } catch (error) {
+      setExampleError(error instanceof Error ? error.message : "Пример пока недоступен");
+    } finally {
+      setExampleLoading(false);
+    }
   }
 
   const primaryText = item.cardType === "new" || item.direction === "en-ru" ? item.word.english : item.word.translation;
@@ -230,15 +287,44 @@ export function SwipeWordCard({ item, busy = false, onAction }: SwipeWordCardPro
             </div>
           ) : null}
 
-          {item.word.exampleEn ? (
+          {example ? (
             <div className="rounded-lg border border-emerald-300/15 bg-emerald-400/10 p-4">
               <p className="text-xs uppercase tracking-[0.16em] text-emerald-100/80">Example</p>
-              <p className="mt-2 text-sm leading-6 text-emerald-50">{item.word.exampleEn}</p>
-              {item.word.exampleRu ? (
-                <p className="mt-2 text-sm leading-6 text-emerald-100/75">{item.word.exampleRu}</p>
+              <p className="mt-2 text-sm leading-6 text-emerald-50">{example.en}</p>
+              {example.ru ? (
+                <p className="mt-2 text-sm leading-6 text-emerald-100/75">{example.ru}</p>
+              ) : null}
+              {example.source || example.provider ? (
+                <p className="mt-2 text-xs text-emerald-100/60">
+                  Источник: {example.source ?? example.provider}
+                </p>
               ) : null}
             </div>
-          ) : null}
+          ) : (
+            <div className="rounded-lg border border-white/10 bg-white/[0.03] p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Пример использования</p>
+                  {exampleError ? <p className="mt-2 text-sm text-amber-100">{exampleError}</p> : null}
+                </div>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  icon={
+                    exampleLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <MessageSquareText className="h-4 w-4" />
+                    )
+                  }
+                  onClick={() => void loadExample()}
+                  disabled={exampleLoading}
+                >
+                  {exampleLoading ? "Загружаю" : "Получить пример"}
+                </Button>
+              </div>
+            </div>
+          )}
 
           <div className="grid gap-3 sm:grid-cols-2">
             <Button

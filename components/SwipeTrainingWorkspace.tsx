@@ -112,7 +112,7 @@ export function SwipeTrainingWorkspace({
             <h2 className="mt-1 text-2xl font-semibold text-white">{deck.cardSet?.title ?? deck.dictionary.title}</h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
               Карточки идут по очереди: сначала слова, срок повторения которых наступил, потом новые слова из
-              B2-словаря.
+              активного словаря.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">

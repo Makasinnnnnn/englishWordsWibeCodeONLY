@@ -1,16 +1,13 @@
 import { buildCardQueue, buildCardStats } from "@/lib/cards/queue";
 import { serializeCardQueue, serializeDictionary, type CardDeckView } from "@/lib/cards/serializer";
-import { defaultCardDictionarySlug } from "@/lib/cardDictionaryData";
+import { getActiveDictionaryForUser } from "@/lib/dictionaries/active";
 import { prisma } from "@/lib/prisma";
 
 export async function getDefaultCardDeck(
   userId: string,
   options: { includeLearnedOnce?: boolean; cardSetId?: string; useTodaySet?: boolean } = {}
 ) {
-  const dictionary = await prisma.dictionary.findFirst({
-    where: { OR: [{ isDefault: true }, { slug: defaultCardDictionarySlug }] },
-    orderBy: [{ isDefault: "desc" }, { createdAt: "asc" }]
-  });
+  const dictionary = await getActiveDictionaryForUser(userId);
 
   if (!dictionary) {
     return null;
@@ -39,7 +36,7 @@ export async function getDefaultCardDeck(
     cardSet
       ? Promise.resolve(cardSet.words.map((item) => item.word))
       : prisma.dictionaryWord.findMany({
-          where: { dictionaryId: dictionary.id },
+          where: { dictionaryId: dictionary.id, archived: false },
           orderBy: [{ position: "asc" }, { english: "asc" }]
         }),
     prisma.cardProgress.findMany({
