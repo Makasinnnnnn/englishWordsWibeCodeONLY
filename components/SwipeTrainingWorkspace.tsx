@@ -7,6 +7,7 @@ import { BookOpen, CalendarClock, CheckCircle2, RotateCcw, Trophy } from "lucide
 
 import { Button } from "@/components/Button";
 import { SwipeWordCard } from "@/components/SwipeWordCard";
+import type { CardDirectionMode } from "@/lib/cards/queue";
 import type { CardDeckView, CardProgressView, CardQueueItemView } from "@/lib/cards/serializer";
 
 type SwipeAction = "known" | "unknown" | "remembered" | "forgot";
@@ -40,12 +41,12 @@ function nextStats(
 
   if (action === "unknown" && !previous.progress) {
     next.rotation += 1;
+    next.left = Math.max(0, next.left - 1);
   }
 
   if (previous.progress?.status === "rotation" && progress.status === "learned") {
     next.rotation = Math.max(0, next.rotation - 1);
     next.learned += 1;
-    next.left = Math.max(0, next.left - 1);
   }
 
   next.due = Math.max(0, next.due - (previous.cardType === "rotation" ? 1 : 0));
@@ -54,10 +55,12 @@ function nextStats(
 
 export function SwipeTrainingWorkspace({
   deck,
-  includeLearnedOnce
+  includeLearnedOnce,
+  directionMode
 }: {
   deck: CardDeckView;
   includeLearnedOnce: boolean;
+  directionMode: CardDirectionMode;
 }) {
   const router = useRouter();
   const [queue, setQueue] = useState(deck.queue);
@@ -66,9 +69,20 @@ export function SwipeTrainingWorkspace({
   const [message, setMessage] = useState<string | null>(null);
   const current = queue[0];
   const activeSetParam = deck.cardSet ? `set=${deck.cardSet.id}` : "";
+  const directionParam = directionMode === "auto" ? "" : `direction=${directionMode}`;
+  const buildCardsHref = (params: string[]) =>
+    `/cards${params.filter(Boolean).length ? `?${params.filter(Boolean).join("&")}` : ""}`;
   const learnedHref = includeLearnedOnce
-    ? `/cards${activeSetParam ? `?${activeSetParam}` : ""}`
-    : `/cards?${[activeSetParam, "learned=1"].filter(Boolean).join("&")}`;
+    ? buildCardsHref([activeSetParam, directionParam])
+    : buildCardsHref([activeSetParam, directionParam, "learned=1"]);
+  const allHref = buildCardsHref([directionParam, "all=1"]);
+  const directionHref = (mode: CardDirectionMode) =>
+    buildCardsHref([
+      activeSetParam,
+      mode === "auto" ? "" : `direction=${mode}`,
+      includeLearnedOnce ? "learned=1" : "",
+      deck.cardSet ? "" : "all=1"
+    ]);
 
   const progressPercent = useMemo(() => {
     return stats.total > 0 ? Math.round(((stats.learned + stats.known) / stats.total) * 100) : 0;
@@ -111,8 +125,8 @@ export function SwipeTrainingWorkspace({
             <p className="text-xs uppercase tracking-[0.16em] text-sky-200/80">Свайп-карточки</p>
             <h2 className="mt-1 text-2xl font-semibold text-white">{deck.cardSet?.title ?? deck.dictionary.title}</h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
-              Карточки идут по очереди: сначала слова, срок повторения которых наступил, потом новые слова из
-              активного словаря.
+              Карточки идут по очереди: сначала слова, срок повторения которых наступил, потом новые слова из активного
+              словаря.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -126,7 +140,7 @@ export function SwipeTrainingWorkspace({
               </Button>
             </Link>
             {deck.cardSet ? (
-              <Link href="/cards?all=1">
+              <Link href={allHref}>
                 <Button type="button" variant="secondary">
                   Весь пул
                 </Button>
@@ -146,6 +160,23 @@ export function SwipeTrainingWorkspace({
           <Metric label="В ротации" value={stats.rotation} icon={CalendarClock} />
           <Metric label="Уже знал" value={stats.known} icon={CheckCircle2} />
           <Metric label="Осталось" value={stats.left} icon={RotateCcw} />
+        </div>
+
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-white/10 bg-white/[0.035] p-3">
+          <p className="text-sm text-slate-400">Направление карточек</p>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { mode: "auto" as const, label: "Авто" },
+              { mode: "en-ru" as const, label: "EN → RU" },
+              { mode: "ru-en" as const, label: "RU → EN" }
+            ].map((item) => (
+              <Link key={item.mode} href={directionHref(item.mode)}>
+                <Button type="button" size="sm" variant={directionMode === item.mode ? "primary" : "secondary"}>
+                  {item.label}
+                </Button>
+              </Link>
+            ))}
+          </div>
         </div>
 
         <div className="mt-5">

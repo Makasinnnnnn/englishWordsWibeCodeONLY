@@ -214,7 +214,8 @@ function serializeDailyRecord(record: DailyContentRecord): DailyContentView {
     videoSource: record.videoSource ?? fallbackDailyContent.videoSource,
     videoUrl: record.videoUrl ?? fallbackDailyContent.videoUrl,
     videoThumbnail: record.videoThumbnail ?? undefined,
-    youtubeEmbedUrl: record.youtubeEmbedUrl || embedUrlFromVideoUrl(record.videoUrl) || fallbackDailyContent.youtubeEmbedUrl,
+    youtubeEmbedUrl:
+      record.youtubeEmbedUrl || embedUrlFromVideoUrl(record.videoUrl) || fallbackDailyContent.youtubeEmbedUrl,
     subtitlesStatus:
       record.subtitlesStatus === "confirmed" || record.subtitlesStatus === "likely" ? record.subtitlesStatus : "unknown"
   };

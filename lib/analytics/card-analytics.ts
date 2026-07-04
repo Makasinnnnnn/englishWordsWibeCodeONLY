@@ -30,10 +30,13 @@ export type CardAnalyticsView = {
     reviews: number;
     newToRotation: number;
     learned: number;
+    forgotten: number;
     activity: number;
   };
   learnedByDay: Array<{ label: string; count: number }>;
   activityByDay: Array<{ label: string; count: number }>;
+  forgottenByDay: Array<{ label: string; count: number }>;
+  newToRotationByDay: Array<{ label: string; count: number }>;
 };
 
 function startOfDay(date: Date) {
@@ -73,7 +76,11 @@ function getPeriodLabel(period: AnalyticsPeriod) {
   }
 }
 
-function buildDailySeries(events: Array<{ createdAt: Date; statusAfter: string }>, period: AnalyticsPeriod, now: Date) {
+function buildDailySeries(
+  events: Array<{ action: string; createdAt: Date; statusAfter: string }>,
+  period: AnalyticsPeriod,
+  now: Date
+) {
   const days = period === "today" ? 1 : period === "7d" ? 7 : period === "30d" ? 30 : period === "90d" ? 90 : 14;
   const firstDay = startOfDay(now);
   firstDay.setDate(firstDay.getDate() - (days - 1));
@@ -88,7 +95,25 @@ function buildDailySeries(events: Array<{ createdAt: Date; statusAfter: string }
     return {
       label: new Intl.DateTimeFormat("ru-RU", { day: "2-digit", month: "short" }).format(day),
       learned: dayEvents.filter((event) => event.statusAfter === "learned").length,
-      activity: dayEvents.length
+      activity: dayEvents.length,
+      forgotten: dayEvents.filter((event) => event.action === "forgot").length,
+      newToRotation: dayEvents.filter((event) => event.action === "unknown").length
+    };
+  });
+}
+
+function buildLearnedDailySeries(progress: Array<{ learnedAt: Date | null }>, period: AnalyticsPeriod, now: Date) {
+  const base = buildDailySeries([], period, now);
+
+  return base.map((day, index) => {
+    const dayStart = startOfDay(now);
+    dayStart.setDate(dayStart.getDate() - (base.length - 1 - index));
+    const nextDay = new Date(dayStart);
+    nextDay.setDate(nextDay.getDate() + 1);
+
+    return {
+      label: day.label,
+      count: progress.filter((item) => item.learnedAt && item.learnedAt >= dayStart && item.learnedAt < nextDay).length
     };
   });
 }
@@ -97,8 +122,13 @@ export function normalizeAnalyticsPeriod(value: string | null | undefined): Anal
   return analyticsPeriods.includes(value as AnalyticsPeriod) ? (value as AnalyticsPeriod) : "7d";
 }
 
-export async function getCardAnalytics(userId: string, period: AnalyticsPeriod, now = new Date()): Promise<CardAnalyticsView> {
+export async function getCardAnalytics(
+  userId: string,
+  period: AnalyticsPeriod,
+  now = new Date()
+): Promise<CardAnalyticsView> {
   const dictionary = await getActiveDictionaryForUser(userId);
+  const emptyDaily = buildDailySeries([], period, now);
 
   if (!dictionary) {
     return {
@@ -116,9 +146,11 @@ export async function getCardAnalytics(userId: string, period: AnalyticsPeriod, 
         learnedToday: 0,
         progressPercent: 0
       },
-      periodTotals: { reviews: 0, newToRotation: 0, learned: 0, activity: 0 },
-      learnedByDay: [],
-      activityByDay: []
+      periodTotals: { reviews: 0, newToRotation: 0, learned: 0, forgotten: 0, activity: 0 },
+      learnedByDay: emptyDaily.map((item) => ({ label: item.label, count: 0 })),
+      activityByDay: emptyDaily.map((item) => ({ label: item.label, count: 0 })),
+      forgottenByDay: emptyDaily.map((item) => ({ label: item.label, count: 0 })),
+      newToRotationByDay: emptyDaily.map((item) => ({ label: item.label, count: 0 }))
     };
   }
 
@@ -153,6 +185,12 @@ export async function getCardAnalytics(userId: string, period: AnalyticsPeriod, 
   ]);
   const stats = buildCardStats(words, progress, now);
   const daily = buildDailySeries(periodEvents, period, now);
+  const learnedDaily = buildLearnedDailySeries(
+    progress.filter((item) => !periodStart || (item.learnedAt && item.learnedAt >= periodStart)),
+    period,
+    now
+  );
+  const learnedInPeriod = learnedDaily.reduce((sum, item) => sum + item.count, 0);
   const progressPercent = stats.total > 0 ? Math.round(((stats.learned + stats.known) / stats.total) * 100) : 0;
 
   return {
@@ -168,16 +206,19 @@ export async function getCardAnalytics(userId: string, period: AnalyticsPeriod, 
     instant: {
       ...stats,
       reviewedToday: todayEvents.filter((event) => event.action === "remembered" || event.action === "forgot").length,
-      learnedToday: todayEvents.filter((event) => event.statusAfter === "learned").length,
+      learnedToday: progress.filter((item) => item.learnedAt && item.learnedAt >= todayStart).length,
       progressPercent
     },
     periodTotals: {
       reviews: periodEvents.filter((event) => event.action === "remembered" || event.action === "forgot").length,
       newToRotation: periodEvents.filter((event) => event.action === "unknown").length,
-      learned: periodEvents.filter((event) => event.statusAfter === "learned").length,
+      learned: learnedInPeriod,
+      forgotten: periodEvents.filter((event) => event.action === "forgot").length,
       activity: periodEvents.length
     },
-    learnedByDay: daily.map((item) => ({ label: item.label, count: item.learned })),
-    activityByDay: daily.map((item) => ({ label: item.label, count: item.activity }))
+    learnedByDay: learnedDaily,
+    activityByDay: daily.map((item) => ({ label: item.label, count: item.activity })),
+    forgottenByDay: daily.map((item) => ({ label: item.label, count: item.forgotten })),
+    newToRotationByDay: daily.map((item) => ({ label: item.label, count: item.newToRotation }))
   };
 }

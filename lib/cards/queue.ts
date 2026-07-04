@@ -2,11 +2,14 @@ import type { CardProgress, DictionaryWord } from "@prisma/client";
 
 import { getCardDirection, totalCardReviewStages } from "@/lib/cards/scheduler";
 
+export type CardDirection = "en-ru" | "ru-en";
+export type CardDirectionMode = CardDirection | "auto";
+
 export type CardQueueItem = {
   word: DictionaryWord;
   progress: CardProgress | null;
   cardType: "new" | "rotation";
-  direction: "en-ru" | "ru-en";
+  direction: CardDirection;
 };
 
 export type CardStats = {
@@ -21,10 +24,13 @@ export type CardStats = {
 export function buildCardQueue(
   words: DictionaryWord[],
   progressItems: CardProgress[],
-  options: { now?: Date; includeLearnedOnce?: boolean } = {}
+  options: { now?: Date; includeLearnedOnce?: boolean; directionMode?: CardDirectionMode } = {}
 ): CardQueueItem[] {
   const now = options.now ?? new Date();
+  const directionMode = options.directionMode ?? "auto";
   const progressByWordId = new Map(progressItems.map((item) => [item.dictionaryWordId, item]));
+  const resolveDirection = (direction: CardDirection): CardDirection =>
+    directionMode === "auto" ? direction : directionMode;
 
   const due: CardQueueItem[] = [];
   const learnedBonus: CardQueueItem[] = [];
@@ -34,7 +40,7 @@ export function buildCardQueue(
     const progress = progressByWordId.get(word.id) ?? null;
 
     if (!progress) {
-      fresh.push({ word, progress: null, cardType: "new", direction: "en-ru" });
+      fresh.push({ word, progress: null, cardType: "new", direction: resolveDirection("en-ru") });
       continue;
     }
 
@@ -43,7 +49,7 @@ export function buildCardQueue(
         word,
         progress,
         cardType: "rotation",
-        direction: getCardDirection(progress.reviewStage)
+        direction: resolveDirection(getCardDirection(progress.reviewStage))
       });
       continue;
     }
@@ -53,7 +59,7 @@ export function buildCardQueue(
         word,
         progress,
         cardType: "rotation",
-        direction: getCardDirection(Math.max(0, totalCardReviewStages - 1))
+        direction: resolveDirection(getCardDirection(Math.max(0, totalCardReviewStages - 1)))
       });
     }
   }
@@ -89,6 +95,6 @@ export function buildCardStats(words: DictionaryWord[], progressItems: CardProgr
     rotation,
     known,
     due,
-    left: Math.max(0, total - learned - known)
+    left: Math.max(0, total - learned - rotation - known)
   };
 }

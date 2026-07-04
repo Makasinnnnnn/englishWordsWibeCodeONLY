@@ -300,8 +300,8 @@ export function SettingsClient({
             >
               {cardDictionaries.map((dictionary) => (
                 <option key={dictionary.id} value={dictionary.id}>
-                  {dictionary.title} · {dictionary.level ?? "level"} · v{dictionary.version} ·{" "}
-                  {dictionary._count.words} слов
+                  {dictionary.title} · {dictionary.level ?? "level"} · v{dictionary.version} · {dictionary._count.words}{" "}
+                  слов
                 </option>
               ))}
             </Select>

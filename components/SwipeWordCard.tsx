@@ -162,10 +162,10 @@ export function SwipeWordCard({ item, busy = false, onAction }: SwipeWordCardPro
     }
   }
 
-  const primaryText = item.cardType === "new" || item.direction === "en-ru" ? item.word.english : item.word.translation;
-  const primaryLabel = item.cardType === "new" || item.direction === "en-ru" ? "English" : "Русский перевод";
-  const hiddenText = item.cardType === "new" || item.direction === "en-ru" ? item.word.translation : item.word.english;
-  const hiddenLabel = item.cardType === "new" || item.direction === "en-ru" ? "Перевод" : "English";
+  const primaryText = item.direction === "en-ru" ? item.word.english : item.word.translation;
+  const primaryLabel = item.direction === "en-ru" ? "English" : "Русский перевод";
+  const hiddenText = item.direction === "en-ru" ? item.word.translation : item.word.english;
+  const hiddenLabel = item.direction === "en-ru" ? "Перевод" : "English";
 
   return (
     <div className="mx-auto w-full max-w-xl touch-pan-y select-none">
@@ -227,7 +227,7 @@ export function SwipeWordCard({ item, busy = false, onAction }: SwipeWordCardPro
           <div>
             <p className="text-xs uppercase tracking-[0.16em] text-slate-500">{primaryLabel}</p>
             <h2 className="mt-2 break-words text-4xl font-semibold text-white sm:text-5xl">{primaryText}</h2>
-            {(item.cardType === "new" || item.direction === "en-ru") && item.word.transcription ? (
+            {item.direction === "en-ru" && item.word.transcription ? (
               <p className="mt-2 text-lg text-sky-100/80">{item.word.transcription}</p>
             ) : null}
           </div>
@@ -291,13 +291,9 @@ export function SwipeWordCard({ item, busy = false, onAction }: SwipeWordCardPro
             <div className="rounded-lg border border-emerald-300/15 bg-emerald-400/10 p-4">
               <p className="text-xs uppercase tracking-[0.16em] text-emerald-100/80">Example</p>
               <p className="mt-2 text-sm leading-6 text-emerald-50">{example.en}</p>
-              {example.ru ? (
-                <p className="mt-2 text-sm leading-6 text-emerald-100/75">{example.ru}</p>
-              ) : null}
+              {example.ru ? <p className="mt-2 text-sm leading-6 text-emerald-100/75">{example.ru}</p> : null}
               {example.source || example.provider ? (
-                <p className="mt-2 text-xs text-emerald-100/60">
-                  Источник: {example.source ?? example.provider}
-                </p>
+                <p className="mt-2 text-xs text-emerald-100/60">Источник: {example.source ?? example.provider}</p>
               ) : null}
             </div>
           ) : (

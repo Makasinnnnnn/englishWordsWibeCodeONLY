@@ -53,7 +53,9 @@ export function Sidebar({ user }: { user: AuthUser | null }) {
         {navigation.map((item) => {
           const Icon = item.icon;
           const isActive =
-            item.href === "/settings" || item.href === "/cards" ? pathname === item.href : pathname.startsWith(item.href);
+            item.href === "/settings" || item.href === "/cards"
+              ? pathname === item.href
+              : pathname.startsWith(item.href);
 
           return (
             <Link

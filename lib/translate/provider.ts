@@ -118,7 +118,11 @@ async function getDictionaryExample(word: string) {
 async function translateByConfiguredProvider(text: string, sourceLang: string, targetLang: string) {
   const configured = process.env.TRANSLATE_PROVIDER?.trim().toLowerCase();
   const order =
-    configured === "google" ? (["google", "yandex"] as const) : configured === "yandex" ? (["yandex", "google"] as const) : (["yandex", "google"] as const);
+    configured === "google"
+      ? (["google", "yandex"] as const)
+      : configured === "yandex"
+        ? (["yandex", "google"] as const)
+        : (["yandex", "google"] as const);
 
   for (const provider of order) {
     try {
@@ -169,7 +173,9 @@ export async function getCardTranslation(
       {
         en: exampleEn,
         ru: translatedExample || undefined,
-        source: dictionaryExample?.source ?? (translatedWord.provider === "fallback" ? "Local fallback" : "Generated fallback")
+        source:
+          dictionaryExample?.source ??
+          (translatedWord.provider === "fallback" ? "Local fallback" : "Generated fallback")
       }
     ],
     provider: translatedWord.provider

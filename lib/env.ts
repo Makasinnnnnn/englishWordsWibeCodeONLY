@@ -22,6 +22,7 @@ const envSchema = z.object({
   DATABASE_URL: z.string().trim().min(1, "DATABASE_URL is required"),
   APP_URL: z.string().trim().url("APP_URL must be a valid URL").default("http://localhost:3000"),
   NEXT_PUBLIC_APP_URL: z.string().trim().url("NEXT_PUBLIC_APP_URL must be a valid URL").optional(),
+  ADMIN_LOGIN: optionalNonEmptyString,
   ADMIN_PASSWORD: optionalNonEmptyString,
   SESSION_SECRET: optionalNonEmptyString,
   SESSION_TTL_DAYS: optionalPositiveInteger.default(30),

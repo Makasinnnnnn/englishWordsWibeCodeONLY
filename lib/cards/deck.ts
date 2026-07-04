@@ -1,11 +1,17 @@
 import { buildCardQueue, buildCardStats } from "@/lib/cards/queue";
+import type { CardDirectionMode } from "@/lib/cards/queue";
 import { serializeCardQueue, serializeDictionary, type CardDeckView } from "@/lib/cards/serializer";
 import { getActiveDictionaryForUser } from "@/lib/dictionaries/active";
 import { prisma } from "@/lib/prisma";
 
 export async function getDefaultCardDeck(
   userId: string,
-  options: { includeLearnedOnce?: boolean; cardSetId?: string; useTodaySet?: boolean } = {}
+  options: {
+    includeLearnedOnce?: boolean;
+    cardSetId?: string;
+    useTodaySet?: boolean;
+    directionMode?: CardDirectionMode;
+  } = {}
 ) {
   const dictionary = await getActiveDictionaryForUser(userId);
 
